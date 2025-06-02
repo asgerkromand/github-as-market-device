@@ -1,0 +1,31 @@
+### FILE OVERVIRE ###
+
+>>> Shortcut filepaths (fp_*) <<<
+> fp_main = '/Volumes/SAMF-SODAS-DISTRACT/Coding Distraction/Asger/GH_scrape_2'
+> fp_main_output = fp_main / 'output'
+
+######################################
+### 1. Collecting first-tier users ###
+######################################
+
+--> |Input|
+1. fp_main / "virksomhedsliste/company_info_list211022.xlsx"
+
+<-- |Output|
+1. fp_main_output / "first_tier_user_info_081222.jsonl"
+2. fp_main_output / "company_catego_dict.obj"
+
+###################################
+### 2. Sorting first-tier users ###
+###################################
+
+--> |Input|
+1. fp_main / "virksomhedsliste/company_info_list211022.xlsx"
+
+<-- |Output|
+1. fp_main_output / "first_tier_ties_sorted.gzip.parquet"
+
+#######################################
+### 3. Collection second-tier users ###
+#######################################
+

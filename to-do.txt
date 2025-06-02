@@ -1,0 +1,11 @@
+To-do for repo:
+    Describe config.ini in readme
+
+To-do in clean up of notebooks:
+    - (Done) Fix github functions and delete token_switcher if not necessary.
+    - Fix notebook 5
+    - Fix import in notebook 6 and implement the test drawer
+    - Make graph constructing functions into a ressource package.
+    - README
+
+    

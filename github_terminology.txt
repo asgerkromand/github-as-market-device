@@ -1,0 +1,7 @@
+GitHub’s “follow,” “star,” and “watch” actions are used for different purposes to help users manage their engagement with repositories. Here’s a brief overview of what each action means:
+
+	1.	Star: This is a way to mark repositories that you find interesting, useful, or noteworthy. It helps track your favorite projects and also shows others which projects you appreciate. You can think of it like a “like” button on GitHub, showing support for a project without directly participating in its development ￼ ￼.
+	2.	Watch: When you “watch” a repository, you’re subscribing to notifications about activity in that repository. This includes issues, pull requests, commits, and other updates. It’s more about staying informed and involved in a project’s progress ￼ ￼. GitHub changed the interface for managing notifications in 2019, so now “watching” is linked to the notification system ￼.
+	3.	Follow: GitHub has a “follow” feature, but it doesn’t apply to repositories in the same way as the others. Instead, it refers to following individual users or organizations. By following someone, you can see their public activity, such as the repositories they contribute to or the actions they take on GitHub. This action is more about staying updated on a user’s activity across GitHub ￼.
+
+Each action helps you engage with GitHub in a way that suits your interests, whether you’re tracking specific repositories or staying updated on the activities of particular users.

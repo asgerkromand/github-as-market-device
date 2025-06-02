@@ -1,0 +1,39 @@
+Metadata-Version: 2.4
+Name: GithubAppMarket
+Version: 0.1.0
+Summary: Codebase for the paper 'Github As A Market Device'
+Author-email: "Eva Iris Otto (University of Copenhagen)" <eio@hum.ku.dk>, "Asger Balsby Kromand (University of Copenhagen)" <asgerkromand@gmail.com>, "Anders Blok (University of Copenhagen)" <abl@ifro.ku.dk>
+License-Expression: MIT
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: pandas
+Requires-Dist: tqdm
+Requires-Dist: numpy
+Requires-Dist: matplotlib
+Requires-Dist: scikit-learn
+Requires-Dist: ipykernel>=6.29.5
+Requires-Dist: pygithub>=2.6.1
+Requires-Dist: bs4>=0.0.2
+Requires-Dist: regex>=2024.11.6
+Requires-Dist: openpyxl>=3.1.5
+Requires-Dist: dataclasses>=0.8
+Requires-Dist: jupyter>=1.1.1
+Requires-Dist: ipython>=8.12.3
+Requires-Dist: pyarrow>=17.0.0
+Requires-Dist: networkx>=3.1
+
+# GitHub Affiliations
+
+Codebase for the paper _"Inferring Company Affiliations on GitHub"_ (2025).
+
+## Structure
+
+- `resources/`: Source code
+- `src/`: Analysis notebooks
+- `data/`: Info on raw/processed data (not included)
+- `results/`: Plots, tables
+
+## Getting Started
+
+```bash
+uv pip install -e .
