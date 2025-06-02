@@ -1,15 +1,34 @@
 cff-version: 1.2.0
 message: "If you use this codebase, please cite it using the metadata below."
-title: "Inferring Company Affiliations on GitHub"
+title: "Github as a Market Device"
 authors:
-  - family-names: Andersen
-    given-names: Alice
-    affiliation: Aarhus University
-  - family-names: Bæk
-    given-names: Bob
-    affiliation: Copenhagen IT
-date-released: 2025-04-24
+  - family-names: Balsby Kromand
+    given-names: Asger
+    affiliation: University of Copenhagen
+  - family-names: Blok
+    given-names: Anders
+    affiliation: University of Copenhagen
+  - family-names: Iris Otto
+    given-names: Eva
+    affiliation: University of Copenhagen
+date-released: 2025-02-06
 version: "0.1.0"
 license: MIT
 type: software
-repository-code: https://github.com/your-org/github-affiliations
+repository-code: https://github.com/asgerkromand/github-as-a-market-device
+preferred-citation:
+  type: article
+  title: "Inferring Company Affiliations on GitHub"
+  authors:
+    - family-names: Balsby Kromand
+      given-names: Asger
+      affiliation: University of Copenhagen
+    - family-names: Blok
+      given-names: Anders
+      affiliation: University of Copenhagen
+    - family-names: Iris Otto
+      given-names: Eva
+      affiliation: University of Copenhagen
+  journal: "Journal of Digital Social Research"
+  year: 2025
+  doi: 10.xxxx/your-paper-doi
