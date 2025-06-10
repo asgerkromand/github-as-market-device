@@ -2,6 +2,8 @@
 notebook_archive/
 .DS_Store
 to-do.txt
-.vscode/
+.vscode
 .git/
 GithubAppMarket.egg-info/
+.env
+.envrc
