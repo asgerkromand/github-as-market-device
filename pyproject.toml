@@ -3,16 +3,16 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "GithubAppMarket"
+name = "GithubAsMarketDevice"
 version = "0.1.0"
-description = "Codebase for the paper 'Github As A Market Device'"
+description = "Codebase for the paper 'Github As Market Device'"
 readme = "README.md"
 requires-python = ">=3.8"
 
 authors = [
-  { name = "Eva Iris Otto (University of Copenhagen)", email = "eio@hum.ku.dk" },
-  { name = "Asger Balsby Kromand (University of Copenhagen)", email = "asgerkromand@gmail.com" },
-  { name = "Anders Blok (University of Copenhagen)", email = "abl@ifro.ku.dk" }
+  { name = "Eva Iris Otto (Department of Communication, University of Copenhagen, Copenhagen, Denmark)", email = "eio@hum.ku.dk" },
+  { name = "Center for Social Data Science, University of Copenhagen, Copenhagen, Denmark", email = "asgerkromand@gmail.com" },
+  { name = "Anders Blok (Department of Food and Resource Economics and Center for Social Data Science, University of Copenhagen, Copenhagen, Denmark)", email = "abl@ifro.ku.dk" }
 ]
 
 license = "MIT"

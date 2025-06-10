@@ -1,34 +1,36 @@
 cff-version: 1.2.0
-message: "If you use this codebase, please cite it using the metadata below."
-title: "Github as a Market Device"
+message: "If you use this codebase, please cite it as below."
+title: "GitHub as Market Device: Attention and Collaboration Networks in a Local Proprietary App Ecosystem"
 authors:
-  - family-names: Balsby Kromand
-    given-names: Asger
-    affiliation: University of Copenhagen
-  - family-names: Blok
-    given-names: Anders
-    affiliation: University of Copenhagen
-  - family-names: Iris Otto
-    given-names: Eva
-    affiliation: University of Copenhagen
-date-released: 2025-02-06
+  - family-names: "Balsby Kromand"
+    given-names: "Asger"
+    affiliation: "Center for Social Data Science, University of Copenhagen, Copenhagen, Denmark"
+    orcid: "https://orcid.org/0000-0002-3403-698X"
+  - family-names: "Blok"
+    given-names: "Anders"
+    affiliation: "Department of Food and Resource Economics and Center for Social Data Science, University of Copenhagen, Copenhagen, Denmark"
+  - family-names: "Iris Otto"
+    given-names: "Eva"
+    affiliation: "Department of Communication, University of Copenhagen, Copenhagen, Denmark"
+date-released: 2025-01-01
 version: "0.1.0"
 license: MIT
 type: software
-repository-code: https://github.com/asgerkromand/github-as-a-market-device
+repository-code: https://github.com/asgerkromand/github-as-market-device
 preferred-citation:
-  type: article
-  title: "Inferring Company Affiliations on GitHub"
+  type: journal-article
+  title: "GitHub as Market Device: Attention and Collaboration Networks in a Local Proprietary App Ecosystem"
   authors:
-    - family-names: Balsby Kromand
-      given-names: Asger
-      affiliation: University of Copenhagen
-    - family-names: Blok
-      given-names: Anders
-      affiliation: University of Copenhagen
-    - family-names: Iris Otto
-      given-names: Eva
-      affiliation: University of Copenhagen
-  journal: "Journal of Digital Social Research"
+    - family-names: "Balsby Kromand"
+      given-names: "Asger"
+      affiliation: "Center for Social Data Science, University of Copenhagen, Copenhagen, Denmark"
+      orcid: "https://orcid.org/0000-0002-3403-698X"
+    - family-names: "Blok"
+      given-names: "Anders"
+      affiliation: "Department of Food and Resource Economics and Center for Social Data Science, University of Copenhagen, Copenhagen, Denmark"
+    - family-names: "Iris Otto"
+      given-names: "Eva"
+      affiliation: "Department of Communication, University of Copenhagen, Copenhagen, Denmark"
+  journal: "Consumption Markets & Culture"
   year: 2025
   doi: 10.xxxx/your-paper-doi
