@@ -5,13 +5,14 @@ authors:
   - family-names: "Balsby Kromand"
     given-names: "Asger"
     affiliation: "Center for Social Data Science, University of Copenhagen, Copenhagen, Denmark"
-    orcid: "https://orcid.org/0000-0002-3403-698X"
   - family-names: "Blok"
     given-names: "Anders"
     affiliation: "Department of Food and Resource Economics and Center for Social Data Science, University of Copenhagen, Copenhagen, Denmark"
+    orcid: "https://orcid.org/0000-0002-3403-698X"
   - family-names: "Iris Otto"
     given-names: "Eva"
     affiliation: "Department of Communication, University of Copenhagen, Copenhagen, Denmark"
+    orcid: "https://orcid.org/0000-0002-1060-1219"
 date-released: 2025-01-01
 version: "0.1.0"
 license: MIT
@@ -24,13 +25,14 @@ preferred-citation:
     - family-names: "Balsby Kromand"
       given-names: "Asger"
       affiliation: "Center for Social Data Science, University of Copenhagen, Copenhagen, Denmark"
-      orcid: "https://orcid.org/0000-0002-3403-698X"
     - family-names: "Blok"
       given-names: "Anders"
       affiliation: "Department of Food and Resource Economics and Center for Social Data Science, University of Copenhagen, Copenhagen, Denmark"
+      orcid: "https://orcid.org/0000-0002-3403-698X"
     - family-names: "Iris Otto"
       given-names: "Eva"
       affiliation: "Department of Communication, University of Copenhagen, Copenhagen, Denmark"
+      orcid: "https://orcid.org/0000-0002-1060-1219"
   journal: "Consumption Markets & Culture"
   year: 2025
   doi: 10.xxxx/your-paper-doi

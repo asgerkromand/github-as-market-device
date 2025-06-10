@@ -1,0 +1,16 @@
+pandas
+tqdm
+numpy
+matplotlib
+scikit-learn
+ipykernel>=6.29.5
+pygithub>=2.6.1
+beautifulsoup4>=0.0.2
+regex>=2024.11.6
+openpyxl>=3.1.5
+dataclasses>=0.8
+jupyter>=1.1.1
+ipython>=8.12.3
+pyarrow>=17.0.0
+networkx>=3.1
+lxml>=5.4.0
