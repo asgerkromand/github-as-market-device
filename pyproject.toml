@@ -25,7 +25,7 @@ dependencies = [
   "scikit-learn",
   "ipykernel>=6.29.5",
   "pygithub>=2.6.1",
-  "bs4>=0.0.2",
+  "beautifulsoup4>=0.0.2",
   "regex>=2024.11.6",
   "openpyxl>=3.1.5",
   "dataclasses>=0.8",
