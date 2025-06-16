@@ -25,6 +25,9 @@ with open(fp_main_output / "company_category_dict.jsonl", "r") as f:
         if company and category is not None:
             company_category_map[company] = int(category)
 
+# Set seed
+SEED = 1704
+
 class CompanyUserLookup:
     def __init__(self, df: pd.DataFrame, company_category_map: dict = company_category_map):
         self.df = df
@@ -329,7 +332,7 @@ class NetworkVisualizer:
             label = self.company_catego_translate.get(raw_cat, "NA")
             self.G.nodes[node]["company_category"] = label
 
-    def layout(self, layout_type="spring_layout", seed=170497, k=1):
+    def layout(self, layout_type="spring_layout", seed=SEED, k=1.5):
         """
         Computes the layout of the graph.
 
@@ -517,7 +520,7 @@ class NetworkVisualizer:
         edgelist,
         layout_type="spring_layout",
         figsize=(20, 20),
-        seed=1704,
+        seed=SEED,
         k=1.5,
         title="Network",
     ):
@@ -782,7 +785,11 @@ class NetworkVisualizer3:
             return edgelist[edgelist["action"].isin(self.COLLABORATION_ACTIONS)]
         raise ValueError("graph_type must be 'attention' or 'collaboration'")
 
-    def layout(self, layout_type="spring_layout", seed=170497, k=1):
+    def layout(self, layout_type="spring_layout", seed=SEED):
+        if self.graph_type == "attention":
+            k = 1.8
+        elif self.graph_type == "collaboration":
+            k = 1.5
         if layout_type == "spring_layout":
             return nx.spring_layout(self.G, seed=seed, k=k, iterations=50, weight="weight")
         raise ValueError(f"Layout '{layout_type}' is not supported. Try 'spring_layout'.")
@@ -883,6 +890,24 @@ class NetworkVisualizer3:
             )
             for label, color in self.node_colors.items()
         ]
+    
+    def calculate_densities(self):
+        # Create a copy of the graph to avoid modifying the original
+        graph = self.G.copy()
+
+        # Remove self-loops
+        self_loops = list(nx.selfloop_edges(graph))
+        graph.remove_edges_from(self_loops)
+
+        # Calculate unweighted density
+        number_of_nodes = graph.number_of_nodes()
+        possible_edges = number_of_nodes * (number_of_nodes - 1)
+
+        # Calculate weighted density
+        sum_of_weights = sum(data['weight'] for u, v, data in graph.edges(data=True))
+        weighted_density = sum_of_weights / possible_edges if possible_edges != 0 else 0
+
+        return weighted_density
 
     def add_network_stats(self, ax, edgelist, pos=(0.02, 0.02), fontsize=16):
         no_users = len(pd.unique(edgelist[['src', 'target']].values.ravel()))
@@ -897,15 +922,19 @@ class NetworkVisualizer3:
         no_selfloops = edgelist[selfloop_mask]['action'].value_counts().sum()
         no_companies = len(set(edgelist["src_company"]).union(edgelist["target_company"]))
 
+        # Weighted density 
+        weighted_density = self.calculate_densities()
+
         stats_text = [
             r"$\mathit{Network\ topology}$",
             "",
-            f"No. users: {no_users}",
-            f"User edges (directed): {no_users_edge}",
-            f"Inter-company edges (directed): {no_inter_company_edges_directed}",
-            f"Inter-company GH actions: {no_inter_weight}",
+            f"No. of users: {no_users}",
+            f"No. of companies: {no_companies}",
+            f"Unique user-to-user edges (directed): {no_users_edge}",
+            f"Unique inter-company edges (directed): {no_inter_company_edges_directed}",
+            f"Inter-company GH actions in total: {no_inter_weight}",
             f"Intra-company GH actions: {no_selfloops}",
-            f"No. companies: {no_companies}",
+            f"Weighted density: {weighted_density:.4f}",
         ]
 
         ax.text(
@@ -916,9 +945,9 @@ class NetworkVisualizer3:
             transform=ax.transAxes,
         )
 
-    def create_plot(self, layout_type="spring_layout", figsize=(20, 20), seed=1704, k=1.5, title="Network"):
+    def create_plot(self, layout_type="spring_layout", figsize=(20, 20), seed=SEED, title="Network"):
         fig, ax = plt.subplots(figsize=figsize)
-        pos = self.layout(layout_type=layout_type, seed=seed, k=k)
+        pos = self.layout(layout_type=layout_type, seed=seed)
         self.draw_nodes(pos, ax)
         self.draw_edges(pos, ax)
         self.draw_labels(pos, ax)

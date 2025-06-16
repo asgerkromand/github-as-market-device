@@ -303,48 +303,34 @@ def look_company_up_in_edgelist(
           exclude_self_loops: bool = True
           ) -> pd.DataFrame:
     
-    if company:
-        if alternative_company:
-            edgelist = edgelist[
-                ((edgelist['src_company'] == company) & 
-                (edgelist['target_company'] == alternative_company)) |
-                ((edgelist['src_company'] == alternative_company) &
-                (edgelist['target_company'] == company))
-                ]
-        else:
-            edgelist = edgelist[
-                (edgelist['src_company'] == company) | 
-                (edgelist['target_company'] == company)
-                ]
-            
-    if exclude_self_loops:
-        edgelist = edgelist[
-            (edgelist['src_company'] != edgelist['target_company'])
-            ]
-    
-    if direction == 'all':
-        # Sort by src_company and target_company
-        edgelist = edgelist.sort_values(by=['src_company', 'target_company'])
-        return edgelist
-    elif direction == 'in':
-        edgelist = edgelist[edgelist['target_company'] == company]
-        # Sort by src_company
-        edgelist = edgelist.sort_values(by=['src_company'])
-        return edgelist
-    elif direction == 'out':
-        edgelist = edgelist[edgelist['src_company'] == company]
-        # Sort by target_company
-        edgelist = edgelist.sort_values(by=['target_company'])
-        return edgelist
-    elif direction == 'self-loop':
-        edgelist = edgelist[
-            (edgelist['src_company'] == company) & 
+    # Filter edgelist looking up one company
+    if company and not alternative_company:
+        one_company_mask = (
+            (edgelist['src_company'] == company) | 
             (edgelist['target_company'] == company)
-            ]
-        # Sort by src and target
-        edgelist = edgelist.sort_values(by=['src', 'target'])
-        return edgelist
+        )
+        edgelist = edgelist[one_company_mask].copy()
+
+    # Filter edgelist looking up two companies
+    elif company and alternative_company:
+        two_company_mask = (
+            ((edgelist['src_company'] == company) & (edgelist['target_company'] == alternative_company)) |
+            ((edgelist['src_company'] == alternative_company) & (edgelist['target_company'] == company))
+        )
+        edgelist = edgelist[two_company_mask].copy()
+
+    # Filter edgelist for self-loops (intra-company ties) or not
+    if exclude_self_loops:
+        edgelist = edgelist[edgelist['src_company'] != edgelist['target_company']].copy()
+
+    # Filter edgelist for direction
+    if direction == 'out':
+        edgelist = edgelist[edgelist['src_company'] == company].copy()
+    elif direction == 'in':
+        edgelist = edgelist[edgelist['target_company'] == company].copy()
+    elif direction == 'all':
+        pass
+    else:
+        raise ValueError("Invalid direction specified. Use 'in', 'out', or 'all'.")
     
-
-
     return edgelist
