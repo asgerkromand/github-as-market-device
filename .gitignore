@@ -3,7 +3,7 @@ notebook_archive/
 .DS_Store
 .vscode
 .git/
-GithubAppMarket.egg-info/
+GithubAsMarketDevice.egg-info
 .env
 .envrc
 to-do.txt

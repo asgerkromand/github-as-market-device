@@ -8,7 +8,7 @@ GithubAsMarketDevice.egg-info/requires.txt
 GithubAsMarketDevice.egg-info/top_level.txt
 resources/__init__.py
 resources/filter_functions.py
-resources/generate_appendix_tables.py
+resources/generate_appendix.py
 resources/github_functions.py
 resources/network_functions.py
 resources/regex_company_patterns.py

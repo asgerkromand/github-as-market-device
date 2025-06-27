@@ -20,7 +20,7 @@ COMPANY_REGEX_DICT = company_regex_dict
 ### PATHS ###
 #############
 
-fp_main = Path('/Volumes/SAM-SODAS-DISTRACT/Coding Distraction/github_as_a_market_device')
+fp_main = Path('/Volumes/SAM-SODAS-DISTRACT/Coding Distraction/github_as_market_device')
 fp_output = fp_main / "output"
 
 # Pre-defined location filter string
@@ -148,7 +148,7 @@ def search_for_company(bio_variables: List[str]) -> Optional[Dict[str, List[str]
 
     return matches if matches else None
 
-def infer_dk_company_from_values(
+def infer_if_dk_and_company(
     user_login: str,
     company: str,
     email: str,
@@ -164,16 +164,16 @@ def infer_dk_company_from_values(
             - DK location matches (list of str)
             - company matches: Dict[company_name, List[str (matched text)]]
     """
-    bio_variables = [user_login, company, email, bio, blog]
-    bio_variables = [str(bio.lower()) for bio in bio_variables if bio]
+    bio_variables_bundle = [user_login, company, email, bio, blog]
+    bio_variables_clean = [str(bio.lower()) for bio in bio_variables_bundle if bio]
 
     # Check if from Denmark
-    location_result = user_is_from_dk(bio_variables, location)
+    location_result = user_is_from_dk(bio_variables_clean, location)
     if not location_result:
         return None
 
     # Search for company matches
-    matched_companies = search_for_company(bio_variables)
+    matched_companies = search_for_company(bio_variables_clean)
     if not matched_companies:
         return None
 

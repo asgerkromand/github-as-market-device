@@ -12,7 +12,7 @@ from datetime import datetime
 
 # Paths
 fp_main = Path(
-    "/Volumes/SAM-SODAS-DISTRACT/Coding Distraction/github_as_a_market_device"
+    "/Volumes/SAM-SODAS-DISTRACT/Coding Distraction/github_as_market_device"
 )
 fp_main_output = Path(fp_main / "output")
 
@@ -27,6 +27,30 @@ with open(fp_main_output / "company_category_dict.jsonl", "r") as f:
 
 # Set seed
 SEED = 1704
+
+def calculate_weighted_density(directed_graph):
+    """
+    Calculate the weighted density of a directed graph.
+    
+    Weighted density = sum of edge weights / number of possible directed edges (n*(n-1))
+    Self-loops are excluded from both the edge set and the possible edge count.
+    
+    Parameters:
+        directed_graph (networkx.DiGraph): A directed graph with edge weights.
+    
+    Returns:
+        float: Weighted density of the graph.
+    """
+    graph = directed_graph.copy()
+    graph.remove_edges_from(nx.selfloop_edges(graph))
+    
+    number_of_nodes = graph.number_of_nodes()
+    possible_edges = number_of_nodes * (number_of_nodes - 1)
+    
+    sum_of_weights = sum(data.get('weight', 1) for u, v, data in graph.edges(data=True))
+    weighted_density = sum_of_weights / possible_edges if possible_edges != 0 else 0
+    
+    return weighted_density
 
 class CompanyUserLookup:
     def __init__(self, df: pd.DataFrame, company_category_map: dict = company_category_map):
@@ -306,456 +330,7 @@ class GraphConstructor:
 
         return graph
 
-
 class NetworkVisualizer:
-    def __init__(self, G, company_catego, company_catego_translate, node_colors):
-        """
-        Initializes the network visualizer.
-
-        Parameters:
-        - G: A NetworkX graph object (directed or undirected)
-        - company_catego: Dictionary mapping nodes to company category codes
-        - company_catego_translate: Dictionary translating category codes to readable labels
-        - node_colors: Dictionary mapping category labels to color hex codes
-        """
-        self.G = G
-        self.company_catego = company_catego
-        self.company_catego_translate = company_catego_translate
-        self.node_colors = node_colors
-
-        self._add_node_attributes()
-
-    def _add_node_attributes(self):
-        """Adds company category labels to nodes."""
-        for node in self.G.nodes:
-            raw_cat = self.company_catego.get(node, "NA")
-            label = self.company_catego_translate.get(raw_cat, "NA")
-            self.G.nodes[node]["company_category"] = label
-
-    def layout(self, layout_type="spring_layout", seed=SEED, k=1.5):
-        """
-        Computes the layout of the graph.
-
-        Parameters:
-        - layout_type: Type of layout to compute (default: 'spring_layout')
-        - seed: Seed for reproducibility
-        - k: Optimal distance between nodes
-
-        Returns:
-        - pos: Dictionary of positions keyed by node
-        """
-        if layout_type == "spring_layout":
-            return nx.spring_layout(
-                self.G, seed=seed, k=k, iterations=50, weight="weight"
-            )
-        raise ValueError(f"Layout '{layout_type}' not supported.")
-
-    def draw_nodes(self, pos, ax, alpha=1):
-        """
-        Draws graph nodes with colors and sizes based on degree.
-
-        Parameters:
-        - pos: Node positions
-        - ax: Matplotlib axis
-        - alpha: Transparency
-        """
-        node_size = [500 + (100 * self.G.degree[n]) for n in self.G]
-        node_colors = [
-            self.node_colors[self.G.nodes[n]["company_category"]] for n in self.G
-        ]
-        nx.draw_networkx_nodes(
-            self.G,
-            pos,
-            ax=ax,
-            node_color=node_colors,
-            node_size=node_size,
-            alpha=alpha,
-            edgecolors="black",
-        )
-
-    def _filter_edges(self, edge_type):
-        """Returns a list of inter- or intra-company edges."""
-        if edge_type == "inter":
-            return [
-                (u, v, d)
-                for u, v, d in self.G.edges(data=True)
-                if d.get("d_inter_level") == 1
-            ]
-        if edge_type == "intra":
-            return [
-                (u, v, d)
-                for u, v, d in self.G.edges(data=True)
-                if d.get("d_intra_level") == 1
-            ]
-        raise ValueError("Edge type must be 'inter' or 'intra'")
-
-    def _log_scale_weights(self, edges):
-        """Applies log-scaling and normalization to edge weights."""
-        log_weights = {(u, v): np.log(d["weight"] + 1) for u, v, d in edges}
-        min_w, max_w = min(log_weights.values()), max(log_weights.values())
-        if min_w == max_w:
-            return {edge: 2 for edge in log_weights}
-        return {
-            edge: 1 + (w - min_w) / (max_w - min_w) * 3
-            for edge, w in log_weights.items()
-        }
-
-    def draw_edges(self, pos, ax, alpha=1):
-        """
-        Draws both inter- and intra-company edges.
-
-        Parameters:
-        - pos: Node positions
-        - ax: Matplotlib axis
-        - alpha: Transparency
-        """
-        inter = self._filter_edges("inter")
-        intra = self._filter_edges("intra")
-        edge_widths = self._log_scale_weights(inter + intra)
-
-        nx.set_edge_attributes(self.G, edge_widths, "edge_width")
-
-        nx.draw_networkx_edges(
-            self.G,
-            pos,
-            ax=ax,
-            edgelist=inter,
-            width=[edge_widths[(u, v)] for u, v, d in inter],
-            edge_color="black",
-            alpha=alpha,
-            arrows=True,
-            arrowstyle="->",
-            connectionstyle="arc3,rad=0.1",
-            arrowsize=40,
-        )
-
-        nx.draw_networkx_edges(
-            self.G,
-            pos,
-            ax=ax,
-            edgelist=intra,
-            width=[edge_widths[(u, v)] for u, v, d in intra],
-            edge_color="black",
-            alpha=alpha,
-            style="dashed",
-            arrows=True,
-            arrowstyle="->",
-            arrowsize=20,
-        )
-
-    def draw_labels(
-        self, pos, ax, verticalalignment="top", horizontalalignment="right"
-    ):
-        """Draws node labels."""
-        labels = {n: n for n in self.G.nodes}
-        nx.draw_networkx_labels(
-            self.G,
-            pos,
-            labels,
-            font_size=11,
-            font_family="verdana",
-            verticalalignment=verticalalignment,
-            horizontalalignment=horizontalalignment,
-            bbox=dict(facecolor="white", alpha=0.8, edgecolor="none"),
-            font_weight="bold",
-            ax=ax,
-        )
-
-    def get_legend_handles(self, wrap_width=30):
-        """Returns legend handles for company categories."""
-
-        def wrap_text(text):
-            return "\n".join(textwrap.wrap(text, width=wrap_width))
-
-        return [
-            Line2D(
-                [0],
-                [0],
-                marker="o",
-                color="w",
-                markerfacecolor=color,
-                markersize=14,
-                label=wrap_text(label),
-            )
-            for label, color in self.node_colors.items()
-        ]
-
-    def add_network_stats(self, ax, edgelist, pos=(0.02, 0.02), fontsize=16):
-        """Adds text box with basic network statistics."""
-        no_nodes = self.G.number_of_nodes()
-        no_weighted_edges = self.G.number_of_edges()
-        no_selfloops = edgelist[
-            (edgelist["company_src"] == edgelist["company_target"])
-        ].shape[0]
-        no_companies = len(
-            set(edgelist["company_src"]).union(edgelist["company_target"])
-        )
-        no_companies_w_inter = (
-            edgelist.query("company_src != company_target")[
-                ["company_src", "company_target"]
-            ]
-            .stack()
-            .nunique()
-        )
-
-        extra_legend = [
-            r"$\mathit{Network\ topology}$",
-            f"",
-            f"No. of user nodes: {no_nodes}",
-            f"No. of weighted edges: {no_weighted_edges}",
-            f"No. of self-loops (weighted edges): {no_selfloops}",
-            f"No. of companies: {no_companies}",
-            f"No. of companies with inter-company edges: {no_companies_w_inter}",
-        ]
-        ax.text(
-            *pos,
-            "\n".join(extra_legend),
-            fontsize=fontsize,
-            bbox=dict(facecolor="white", alpha=0, edgecolor="none"),
-            transform=ax.transAxes,
-        )
-
-    def plot(
-        self,
-        edgelist,
-        layout_type="spring_layout",
-        figsize=(20, 20),
-        seed=SEED,
-        k=1.5,
-        title="Network",
-    ):
-        """
-        Full network plotting pipeline.
-
-        Parameters:
-        - edgelist: DataFrame of edges to use for stats
-        - layout_type: Layout algorithm name
-        - figsize: Size of the matplotlib figure
-        - seed: Layout randomness seed
-        - k: Layout spacing parameter
-        - title: Plot title
-        """
-        fig, ax = plt.subplots(figsize=figsize)
-        pos = self.layout(layout_type=layout_type, seed=seed, k=k)
-        self.draw_nodes(pos, ax)
-        self.draw_edges(pos, ax)
-        self.draw_labels(pos, ax)
-        ax.set_axis_off()
-
-        legend = ax.legend(
-            handles=self.get_legend_handles(),
-            title=r"$\mathit{Company\ categories}$",
-            title_fontsize=16,
-            fontsize=16,
-            loc="upper right",
-        )
-        legend._legend_box.align = "left"
-
-        self.add_network_stats(ax, edgelist)
-        plt.title(title, fontsize=20)
-        plt.show()
-
-        return fig
-
-class NetworkVisualizer2:
-    DEFAULT_NODE_COLORS = {
-        "1 Digital and marketing consultancies": '#003f5c',
-        "2 Bespoke app companies": '#665191',
-        "3 Data-broker- and infrastructure companies": '#d45087',
-        "4 Companies with specific digital part/app as part of service/product": '#ff7c43',
-    }
-    ATTENTION_ACTIONS = {"follows", "stars", "watches"}
-    COLLABORATION_ACTIONS = {"forks"}
-    FONT_FAMILY = "verdana"
-
-    def __init__(self, G, edgelist=None, graph_type: Literal["attention", "collaboration"]='attention'):
-        self.G = G
-        self.graph_type = graph_type
-        self.edgelist = self.subset_edgelist(edgelist)
-        self.node_colors = self.DEFAULT_NODE_COLORS
-
-    def subset_edgelist(self, edgelist):
-        attention_actions = ["follows", "stars", "watches"]
-        collaboration_actions = ["forks"]
-        if edgelist is None:
-            return None
-        if self.graph_type == "attention":
-            return edgelist[edgelist["action"].isin(attention_actions)]
-        elif self.graph_type == "collaboration":
-            return edgelist[edgelist["action"].isin(collaboration_actions)]
-        else:
-            raise ValueError("graph_type must be 'attention' or 'collaboration'")
-
-    def layout(self, layout_type="spring_layout", seed=170497, k=1):
-        if layout_type == "spring_layout":
-            return nx.spring_layout(self.G, seed=seed, k=k, iterations=50, weight="weight")
-        raise ValueError(f"Layout '{layout_type}' not supported.")
-
-    def _draw_nodes(self, pos, ax, alpha=1):
-        degrees = dict(self.G.degree)
-        node_sizes = [500 + 100 * degrees.get(n, 0) for n in self.G.nodes]
-
-        labels = [self.G.nodes[n].get("label", "NA") for n in self.G.nodes]
-        print(f"Node labels: {labels}")
-        node_colors = [self.node_colors.get(label, "#000000") for label in labels]
-        print(f"Node colors: {node_colors}")
-
-        nx.draw_networkx_nodes(
-            self.G,
-            pos,
-            ax=ax,
-            node_color=node_colors,
-            node_size=node_sizes,
-            alpha=alpha,
-            edgecolors="black",
-        )
-
-    def _filter_edges(self, edge_type):
-        if edge_type == "inter":
-            return [(u, v, d) for u, v, d in self.G.edges(data=True) if d.get("d_inter_level") == 1]
-        if edge_type == "intra":
-            return [(u, v, d) for u, v, d in self.G.edges(data=True) if d.get("d_intra_level") == 1]
-        raise ValueError("Edge type must be 'inter' or 'intra'")
-
-    def _log_scale_weights(self, edges):
-        if not edges:
-            return {}
-        log_weights = {(u, v): np.log(d.get("weight", 1) + 1) for u, v, d in edges}
-        min_w, max_w = min(log_weights.values()), max(log_weights.values())
-        if min_w == max_w:
-            return {edge: 2 for edge in log_weights}
-        return {
-            edge: 1 + (w - min_w) / (max_w - min_w) * 3
-            for edge, w in log_weights.items()
-        }
-
-    def _draw_edges(self, pos, ax, alpha=1):
-        inter_edges = self._filter_edges("inter")
-        intra_edges = self._filter_edges("intra")
-
-        all_edges = inter_edges + intra_edges
-        edge_widths = self._log_scale_weights(all_edges)
-        nx.set_edge_attributes(self.G, edge_widths, "edge_width")
-
-        if inter_edges:
-            nx.draw_networkx_edges(
-                self.G,
-                pos,
-                ax=ax,
-                edgelist=inter_edges,
-                width=[edge_widths[(u, v)] for u, v, _ in inter_edges],
-                edge_color="black",
-                alpha=alpha,
-                arrows=True,
-                arrowstyle="->",
-                connectionstyle="arc3,rad=0.1",
-                arrowsize=40,
-            )
-
-        if intra_edges:
-            nx.draw_networkx_edges(
-                self.G,
-                pos,
-                ax=ax,
-                edgelist=intra_edges,
-                width=[edge_widths[(u, v)] for u, v, _ in intra_edges],
-                edge_color="black",
-                alpha=alpha,
-                style="dashed",
-                arrows=True,
-                arrowstyle="->",
-                arrowsize=20,
-            )
-
-    def _draw_labels(self, pos, ax, verticalalignment="top", horizontalalignment="right"):
-        labels = {n: n for n in self.G.nodes}
-        nx.draw_networkx_labels(
-            self.G,
-            pos,
-            labels,
-            font_size=11,
-            font_family="verdana",
-            verticalalignment=verticalalignment,
-            horizontalalignment=horizontalalignment,
-            bbox=dict(facecolor="white", alpha=0.8, edgecolor="none"),
-            font_weight="bold",
-            ax=ax,
-        )
-
-    def get_legend_handles(self, wrap_width=30):
-        def wrap_text(text):
-            return "\n".join(textwrap.wrap(text, width=wrap_width))
-
-        return [
-            Line2D(
-                [0], [0],
-                marker="o",
-                color="w",
-                markerfacecolor=color,
-                markersize=14,
-                label=wrap_text(label),
-            )
-            for label, color in self.node_colors.items()
-        ]
-
-    def add_network_stats(self, ax, edgelist, pos=(0.02, 0.02), fontsize=16):
-        no_users = pd.unique(edgelist[['src', 'target']].values.ravel()).size
-        no_edges = self.G.number_of_edges()
-        total_weight = sum(d.get("weight", 1) for _, _, d in self.G.edges(data=True))
-        no_selfloops = edgelist[(edgelist["src_company"] == edgelist["target_company"])].shape[0]
-        no_companies = len(set(edgelist["src_company"]).union(edgelist["target_company"]))
-        no_companies_w_inter = (
-            edgelist.query("src_company != target_company")[["src_company", "target_company"]]
-            .stack()
-            .nunique()
-        )
-
-        stats_text = [
-            r"$\mathit{Network\ topology}$",
-            "",
-            f"No. of users: {no_users}",
-            f"No. of edges: {no_edges}",
-            f"Total weight of edges: {total_weight:.2f}",
-            f"No. of self-loops (weighted edges): {no_selfloops}",
-            f"No. of companies: {no_companies}",
-            f"No. of companies with inter-company edges: {no_companies_w_inter}",
-        ]
-
-        ax.text(
-            *pos,
-            "\n".join(stats_text),
-            fontsize=fontsize,
-            bbox=dict(facecolor="white", alpha=0, edgecolor="none"),
-            transform=ax.transAxes,
-        )
-
-    def plot(self, layout_type="spring_layout", figsize=(20, 20), seed=1704, k=1.5, title="Network"):
-        fig, ax = plt.subplots(figsize=figsize)
-        pos = self.layout(layout_type=layout_type, seed=seed, k=k)
-        self._draw_nodes(pos, ax)
-        self._draw_edges(pos, ax)
-        self._draw_labels(pos, ax)
-        ax.set_axis_off()
-
-        legend = ax.legend(
-            handles=self.get_legend_handles(),
-            title=r"$\mathit{Company\ categories}$",
-            title_fontsize=16,
-            fontsize=16,
-            loc="upper right",
-        )
-        legend._legend_box.align = "left"  # type: ignore
-
-        if self.edgelist is not None:
-            self.add_network_stats(ax, self.edgelist)
-
-        plt.title(title, fontsize=20)
-        plt.show()
-
-        return fig
-
-
-class NetworkVisualizer3:
     DEFAULT_NODE_COLORS = {
         "1 Digital and marketing consultancies": '#003f5c',
         "2 Bespoke app companies": '#665191',
@@ -787,9 +362,9 @@ class NetworkVisualizer3:
 
     def layout(self, layout_type="spring_layout", seed=SEED):
         if self.graph_type == "attention":
-            k = 1.8
-        elif self.graph_type == "collaboration":
             k = 1.5
+        elif self.graph_type == "collaboration":
+            k = 1.1
         if layout_type == "spring_layout":
             return nx.spring_layout(self.G, seed=seed, k=k, iterations=50, weight="weight")
         raise ValueError(f"Layout '{layout_type}' is not supported. Try 'spring_layout'.")
@@ -909,31 +484,35 @@ class NetworkVisualizer3:
 
         return weighted_density
 
-    def add_network_stats(self, ax, edgelist, pos=(0.02, 0.02), fontsize=16):
+    def add_network_stats(self, ax, edgelist, pos=(0.02, 0.02), fontsize=14):
+        # User level
         no_users = len(pd.unique(edgelist[['src', 'target']].values.ravel()))
-        no_users_edge = int(sum(d.get("weight", 1) for _, _, d in self.G.edges(data=True)))
-        no_inter_company_edges_directed = len([(u,v) for u, v, d in self.G.edges(data=True) if d.get("d_inter_level") == 1])
+        no_unique_inter_user_to_user = edgelist[edgelist['d_inter_level'] == 1][['src', 'target']].drop_duplicates().shape[0]
+        no_unique_intra_user_to_user = edgelist[edgelist['d_intra_level'] == 1][['src', 'target']].drop_duplicates().shape[0]
+
+        # Company level
+        no_companies = len(set(edgelist["src_company"]).union(edgelist["target_company"]))
+        no_inter_company_edges_directed = len([(u,v) for u,v, d in self.G.edges(data=True) if d.get("d_inter_level") == 1])
+
         # Total weight of inter-company edges (user-level, directed)
-        inter_company_mask = edgelist['src_company'] != edgelist['target_company']
-        no_inter_weight = edgelist[inter_company_mask]['action'].value_counts().sum()
+        no_inter_gh = edgelist[edgelist['d_inter_level'] == 1].shape[0]
 
         # Total weight of self-loop edges (src_company == tgt_company)
-        selfloop_mask = edgelist['src_company'] == edgelist['target_company']
-        no_selfloops = edgelist[selfloop_mask]['action'].value_counts().sum()
-        no_companies = len(set(edgelist["src_company"]).union(edgelist["target_company"]))
+        no_intra_gh = edgelist[edgelist['d_intra_level'] == 1].shape[0]
 
         # Weighted density 
-        weighted_density = self.calculate_densities()
+        weighted_density = calculate_weighted_density(self.G)
 
         stats_text = [
             r"$\mathit{Network\ topology}$",
             "",
             f"No. of users: {no_users}",
             f"No. of companies: {no_companies}",
-            f"Unique user-to-user edges (directed): {no_users_edge}",
+            f"Inter-company GH actions: {no_inter_gh}",
+            f"Intra-company GH actions: {no_intra_gh}",
             f"Unique inter-company edges (directed): {no_inter_company_edges_directed}",
-            f"Inter-company GH actions in total: {no_inter_weight}",
-            f"Intra-company GH actions: {no_selfloops}",
+            f"Unique directed user-to-user edges (inter): {no_unique_inter_user_to_user}",
+            f"Unique directed user-to-user edges (intra): {no_unique_intra_user_to_user}",
             f"Weighted density: {weighted_density:.4f}",
         ]
 

@@ -18,14 +18,14 @@ config = configparser.ConfigParser(inline_comment_prefixes=("#", ";"))
 config.read(Path(__file__).parent / "config.ini")
 
 # Custom functions
-from resources.filter_functions import infer_dk_company_from_values
+from resources.filter_functions import infer_if_dk_and_company
 
 #############
 ### Paths ###
 #############
 
 fp_main_output = Path(
-    '/Volumes/SAM-SODAS-DISTRACT/Coding Distraction/github_as_a_market_device/output'
+    '/Volumes/SAM-SODAS-DISTRACT/Coding Distraction/github_as_market_device/output'
 )
 
 
@@ -33,12 +33,7 @@ fp_main_output = Path(
 ### Tokens ###
 ##############
 
-### NB! ADD YOUR OWN TOKENS TO YOUR config.ini file, WHICH SHOULD BE STORED IN THE SAME LEVEL AS THIS FILE.
-# FOR OUR SCRAPE, 3 TOKENS WERE USED CONTINUALLY.
-# ALTERNATIVELY, WITH FEWER TOKENS, SET THE RATE LIMIT ACCORDINGLY ###
-
-
-# Function to collect GitHub access tokens from config
+# Function to collect GitHub access token from config
 def collect_github_tokens(
     config: configparser.ConfigParser, section="github", prefix="access_token_"
 ) -> dict:
@@ -81,7 +76,7 @@ def ratelimiter(func):
         if github_scraper.github.rate_limiting[0] < ratelimit:
             if github_scraper._max_n_cycle > github_scraper._n_iter:
                 github_scraper._cycle_github()
-                github_scraper._n_iter = +1
+                github_scraper._n_iter += 1
                 print("Cycle")
             else:
                 print(
@@ -425,7 +420,7 @@ class GithubScraper:
         repo_names = self.get_repo_names(all_repos, user)
 
         # 3. Infer DK location and company match
-        match_result = infer_dk_company_from_values(
+        match_result = infer_if_dk_and_company(
             user_login=user_login,
             company=company,
             email=email,
