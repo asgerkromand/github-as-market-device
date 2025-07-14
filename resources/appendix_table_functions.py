@@ -90,14 +90,6 @@ def summarize_company_interactions(edge_df: pd.DataFrame, network_type="attentio
     summary["Company Category"] = pd.to_numeric(summary["Company Category"], errors='coerce').fillna(0).astype(int)
 
     # Convert DataFrame to LaTeX table (no longtable to avoid environment issues)
-    buf = StringIO()
-    summary.to_latex(
-        buf,
-        index=False,
-        escape=True,      # Escape LaTeX special chars safely
-        float_format="%.0f",
-        column_format=None  # Let LaTeX decide or wrap manually
-    )
 
     if network_type == "attention":
         caption = "Attention Edges Summary (Company Level)"
@@ -108,6 +100,8 @@ def summarize_company_interactions(edge_df: pd.DataFrame, network_type="attentio
 
     # Make latex table from the matrix
     latex_str = summary.to_latex(
+        index=False,
+        escape=True,
         caption=caption,
         label=label,
         column_format='>{\\raggedright\\arraybackslash}X r r r r r r r',
