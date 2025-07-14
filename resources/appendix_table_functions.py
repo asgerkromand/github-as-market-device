@@ -98,16 +98,17 @@ def summarize_company_interactions(edge_df: pd.DataFrame, network_type="attentio
         caption = "Collaboration Edges Summary (Company Level)"
         label = "tab:collaboration_summary"
 
-    # Make latex table from the matrix
+    column_format = '>{\\raggedright\\arraybackslash}X ' * len(summary.columns)
+
     latex_str = summary.to_latex(
         index=False,
         escape=True,
         caption=caption,
         label=label,
-        column_format='>{\\raggedright\\arraybackslash}X r r r r r r r',
+        column_format=column_format.strip(),
     )
-
-    # Replace tabular with tabularx and add width
+    
+    # Replace tabular with tabularx and add \textwidth
     latex_str = latex_str.replace(
         '\\begin{tabular}',
         '\\begin{tabularx}{\\textwidth}'
