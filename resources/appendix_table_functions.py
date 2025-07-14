@@ -106,6 +106,7 @@ def summarize_company_interactions(edge_df: pd.DataFrame, network_type="attentio
         caption=caption,
         label=label,
         column_format=column_format.strip(),
+        position='htbp',
     )
     
     # Replace tabular with tabularx and add \textwidth
