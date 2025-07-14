@@ -98,14 +98,18 @@ def summarize_company_interactions(edge_df: pd.DataFrame, network_type="attentio
         caption = "Collaboration Edges Summary (Company Level)"
         label = "tab:collaboration_summary"
 
-    column_format = '>{\\raggedright\\arraybackslash}X ' * len(summary.columns)
-
+    # Fixed width for the first column
+    first_col_width = '3.2cm'
+    
+    # For the first column: p{3.2cm}, for the rest: X columns
+    column_format = f'p{{{first_col_width}}} ' + ' '.join(['>{\\raggedright\\arraybackslash}X'] * (len(summary.columns) - 1))
+    
     latex_str = summary.to_latex(
         index=False,
         escape=True,
         caption=caption,
         label=label,
-        column_format=column_format.strip(),
+        column_format=column_format,
         position='htbp',
     )
     
