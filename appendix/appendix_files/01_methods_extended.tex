@@ -6,7 +6,10 @@ Using GitHub’s advanced search function, we queried each company to identify u
 
 For companies with common or international names -- such as PWC -- initial searches returned thousands of results, only a fraction of which could be confidently linked to the company. To improve precision, we applied geographic filters to the search using GitHub’s query qualifiers (see: https://docs.github.com/en/search-github/searching-on-github/searching-users), incorporating keywords for the 10 biggest Danish cities, and variants of “Denmark,” “Copenhagen”. For instance, our query for Netcompany looked as the following:
 
-"netcompany location:dk location:Denmark location:Danmark location:CPH location:KBH location:Copenhagen location:Cop location:København location:Odense location:Aarhus location:Århus location:Aalborg location:Ålborg location:Esbjerg location:Randers location:Kolding location:Horsens location:Vejle location:Roskilde location:Herning"
+\begin{quote}
+\ttfamily\small
+´´netcompany location:dk location:Denmark location:Danmark location:CPH location:KBH location:Copenhagen location:Cop location:København location:Odense location:Aarhus location:Århus location:Aalborg location:Ålborg location:Esbjerg location:Randers location:Kolding location:Horsens location:Vejle location:Roskilde location:Herning´´
+\end{quote}
 
 In a few cases -- such as FrontIt, Greener Pastures, and Adform -- no users were returned when location filters were applied. In these instances, we removed the filters to identify at least one affiliated user per company (which we manually verified). Although this reduced geographic certainty, it was deemed necessary for initiating our snowball sampling process.
 
