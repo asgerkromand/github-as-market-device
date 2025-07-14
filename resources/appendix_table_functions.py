@@ -83,7 +83,7 @@ def summarize_company_interactions(edge_df: pd.DataFrame, network_type="attentio
     action_cols = [f"{flow} {action.capitalize()}" for flow in flow_types for action in valid_actions]
     desired_cols = base_cols + action_cols
 
-    summary = summary.reindex(columns=desired_cols, fill_value=0)
+    summary = summary.reindex(columns=desired_cols, fill_value=0).sort_values(by="Company")
 
     numeric_cols = summary.columns.difference(["Company", "Company Category"])
     summary[numeric_cols] = summary[numeric_cols].astype(int)
