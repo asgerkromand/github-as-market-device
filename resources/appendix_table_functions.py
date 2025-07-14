@@ -71,13 +71,13 @@ def summarize_company_interactions(edge_df: pd.DataFrame, network_type="attentio
     summary = meta.merge(summary, on="Company", how="right")
 
     # Compute totals
-    summary["Total Inbound Actions"] = summary.filter(like="Inbound").filter(regex="Total Actions").sum(axis=1)
-    summary["Total Outbound Actions"] = summary.filter(like="Outbound").filter(regex="Total Actions").sum(axis=1)
-    summary["Total Actions"] = summary["Total Inbound Actions"] + summary["Total Outbound Actions"]
+    summary["Total Inbound"] = summary.filter(like="Inbound").filter(regex="Total Actions").sum(axis=1)
+    summary["Total Outbound"] = summary.filter(like="Outbound").filter(regex="Total Actions").sum(axis=1)
+    summary["Total Actions"] = summary["Total Inbound"] + summary["Total Outbound"]
 
     base_cols = [
         "Company", "Company Category",
-        "Total Actions", "Total Inbound Actions", "Total Outbound Actions"
+        "Total Actions", "Total Inbound", "Total Outbound"
     ]
     flow_types = ["Intra Inbound", "Intra Outbound", "Inter Inbound", "Inter Outbound"]
     action_cols = [f"{flow} {action.capitalize()}" for flow in flow_types for action in valid_actions]
@@ -92,7 +92,7 @@ def summarize_company_interactions(edge_df: pd.DataFrame, network_type="attentio
     # Convert DataFrame to LaTeX table (no longtable to avoid environment issues)
 
     if network_type == "attention":
-        caption = "Attention Edges Summary (Company Level)"
+        caption = "Attention Actions Summary (Company Level)"
         label = "tab:attention_summary"
     else:
         caption = "Collaboration Edges Summary (Company Level)"
