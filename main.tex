@@ -1,15 +1,21 @@
 \documentclass{article}
-\usepackage{graphicx} % Required for inserting images
+
+\usepackage{geometry} % Load early for page dimensions
+\usepackage{graphicx}
 \usepackage{url}
 \usepackage{changepage}
-\usepackage{tabularx}
 \usepackage{array}  % for \arraybackslash
 \usepackage{pdflscape}
 \usepackage{booktabs}
 \usepackage[table]{xcolor}
-\usepackage{threeparttable}
+
 \usepackage{longtable}
-\usepackage{threeparttablex} 
+\usepackage{threeparttablex}
+
+\usepackage{ltablex}  % multipage + flexible-width tables
+\keepXColumns
+
+\usepackage{changepage}
 
 % Table of contents settings
 \setcounter{tocdepth}{5}
@@ -27,14 +33,18 @@
 
 \subsection{Collaboration Network}
 
+\newgeometry{left=3cm, right=3cm, top=3cm, bottom=3cm}
 \begin{landscape}
 \input{appendix/appendix_files/collaboration_1_edges_summary}
 \end{landscape}
+\restoregeometry
 
 \subsection{Attention Network}
 
+\newgeometry{left=2cm, right=2cm, top=2cm, bottom=2cm}
 \begin{landscape}
 \input{appendix/appendix_files/attention_1_edges_summary}
 \end{landscape}
+\restoregeometry
 
 \end{document}
