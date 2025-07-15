@@ -91,22 +91,23 @@ def summarize_company_interactions(edge_df: pd.DataFrame, network_type="attentio
     summary.columns = [f'\\textbf{{{col}}}' for col in summary.columns]
 
     # Convert DataFrame to LaTeX table (no longtable to avoid environment issues)
-
+    # Decide caption and label based on network type
     if network_type == "attention":
         caption = "Attention Actions Summary (Company Level)"
         label = "tab:attention_summary"
     else:
         caption = "Collaboration Edges Summary (Company Level)"
         label = "tab:collaboration_summary"
-
+    
+    # Define column format:
     first_col_width = '2cm'
     column_format = (
-        f'p{{{first_col_width}}} ' +  # Company - left aligned with fixed width
-        '>{\\centering\\arraybackslash}X ' +  # Company Category - centered
-        '>{\\raggedleft\\arraybackslash}X ' * (len(summary.columns) - 2)  # all other numeric cols right-aligned
+        f'p{{{first_col_width}}} ' +                              # Company column: fixed width
+        '>{\\centering\\arraybackslash}X ' +                      # Company Category: centered
+        '>{\\raggedleft\\arraybackslash}X ' * (len(summary.columns) - 2)  # other numeric columns: right-aligned
     )
-
-    # Generate LaTeX table string from DataFrame
+    
+    # Generate LaTeX string
     latex_str = summary.to_latex(
         index=False,
         escape=False,
@@ -115,27 +116,24 @@ def summarize_company_interactions(edge_df: pd.DataFrame, network_type="attentio
         column_format=column_format,
         position='htbp',
     )
-
-    # Inject threeparttable and rowcolors
+    
+    # Post-process LaTeX string for formatting and notes
     latex_str = latex_str.replace(
         '\\begin{table}[htbp]',
         '\\begin{table}[htbp]\n\\centering\n\\begin{threeparttable}'
     ).replace(
         '\\begin{tabular}',
-        '\\rowcolors{2}{gray!10}{white}\n\\begin{tabularx}{\\textwidth}'
+        '\\rowcolors{2}{gray!10}{white}\n\\begin{tabularx}{\\linewidth}'
     ).replace(
-    '\\end{tabularx}',
-    '\\end{tabularx}\n\\begin{tablenotes}[para,flushleft]\n\\footnotesize\n'
-    '\\item \\textbf{Company Category:} 1 = Digital and marketing consultancies, '
-    '2 = Bespoke app companies, 3 = Data-broker- and infrastructure companies, '
-    '4 = Companies with specific digital part/app as part of service/product\n'
-    '\\end{tablenotes}'
+        '\\end{tabular}',
+        '\\end{tabularx}\n\\begin{tablenotes}[para,flushleft]\n\\footnotesize\n'
+        '\\item \\textbf{Company Category:} 1 = Digital and marketing consultancies, '
+        '2 = Bespoke app companies, 3 = Data-broker- and infrastructure companies, '
+        '4 = Companies with specific digital part/app as part of service/product\n'
+        '\\end{tablenotes}'
     ).replace(
         '\\end{table}',
         '\\end{threeparttable}\n\\end{table}'
-    ).replace(
-        '\\textwidth',
-        '\\linewidth'
     )
-
+    
     return summary, latex_str
