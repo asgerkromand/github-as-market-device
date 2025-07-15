@@ -32,16 +32,20 @@ def get_column_format(network_type: str, ncols: int) -> str:
 
 
 def format_attention_table(latex_str: str, columns, caption: str, label: str, column_format: str) -> str:
-    header_row = (
-        ' & '.join([f'\\textbf{{{col}}}' for col in columns]) + ' \\\\\n\\midrule\n' +
-        '\\rowcolors{2}{white}{gray!30}\n'  # Start row colors here *after* header
+    header = ' & '.join([f'\\textbf{{{col}}}' for col in columns]) + ' \\\\\n\\midrule\n'
+    
+    first_head = (
+        f'\\caption{{{caption}}} \\label{{{label}}} \\\\\n'
+        f'{header}\\endfirsthead\n'
+        '\\rowcolors{2}{white}{gray!30}\n'  # start coloring after first head
     )
-    continued_header = (
+    
+    continued_head = (
         '\\caption[]{(continued)} \\\\\n' +
-        ' & '.join([f'\\textbf{{{col}}}' for col in columns]) + ' \\\\\n\\midrule\n' +
-        '\\rowcolors{2}{white}{gray!30}\n'  # Same for continued header
+        f'{header}\\endhead\n'
+        '\\rowcolors{2}{white}{gray!30}\n'  # start coloring after continued head
     )
-
+    
     return latex_str \
         .replace(
             '\\begin{longtable}',
@@ -52,10 +56,10 @@ def format_attention_table(latex_str: str, columns, caption: str, label: str, co
             '4 = Companies with specific digital part/app as part of service/product\n'
             '\\end{TableNotes}\n\n'
             '\\footnotesize\n\n'
-            '\\begin{longtable}'  # removed \rowcolors here
+            '\\begin{longtable}'
         ).replace(
             '\\toprule',
-            f'\\caption{{{caption}}} \\label{{{label}}} \\\\\n{header_row}\\endfirsthead\n\n{continued_header}\\endhead\n'
+            first_head + '\n' + continued_head
         ).replace(
             '\\bottomrule',
             '\\bottomrule\n\\insertTableNotes'
