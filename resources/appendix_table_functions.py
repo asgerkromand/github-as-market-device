@@ -52,7 +52,8 @@ def format_attention_table(latex_str: str, columns, caption: str, label: str, co
             '4 = Companies with specific digital part/app as part of service/product\n'
             '\\end{TableNotes}\n\n'
             '\\footnotesize\n\n'
-            f'\\begin{{longtable}}{{{column_format}}}'
+            '\\begin{longtable}' 
+            '\n\\rowcolors{2}{white}{gray!30}\n'
         ).replace(
             '\\toprule',
             f'\\caption{{{caption}}} \\label{{{label}}} \\\\\n{header_row}\\endfirsthead\n\n{continued_header}\\endhead\n'
