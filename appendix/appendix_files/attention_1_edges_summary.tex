@@ -1,13 +1,26 @@
-\begin{table}[htbp]
-\centering
-\begin{threeparttable}
-\caption{Attention Actions Summary (Company Level)}
-\label{tab:attention_summary}
-\rowcolors{2}{gray!10}{white}
-\begin{tabularx}{\linewidth}{p{2cm} >{\centering\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X}
+\begin{ThreePartTable}
+\begin{TableNotes}
+\footnotesize
+\item \textbf{Company Category:} 1 = Digital and marketing consultancies, 2 = Bespoke app companies, 3 = Data-broker- and infrastructure companies, 4 = Companies with specific digital part/app as part of service/product
+\end{TableNotes}
+\rowcolors{3}{gray!10}{white}
+\begin{longtable}[htbp]{p{2cm} >{\centering\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X >{\raggedleft\arraybackslash}X}
+\caption{Attention Actions Summary (Company Level)} \label{tab:attention_summary} \\
 \toprule
 \textbf{Company} & \textbf{Company Category} & \textbf{Total Actions} & \textbf{Total Inbound} & \textbf{Total Outbound} & \textbf{Intra Inbound Stars} & \textbf{Intra Inbound Watches} & \textbf{Intra Inbound Follows} & \textbf{Intra Outbound Stars} & \textbf{Intra Outbound Watches} & \textbf{Intra Outbound Follows} & \textbf{Inter Inbound Stars} & \textbf{Inter Inbound Watches} & \textbf{Inter Inbound Follows} & \textbf{Inter Outbound Stars} & \textbf{Inter Outbound Watches} & \textbf{Inter Outbound Follows} \\
 \midrule
+\endfirsthead
+\caption[]{Attention Actions Summary (Company Level)} \\
+\toprule
+\textbf{Company} & \textbf{Company Category} & \textbf{Total Actions} & \textbf{Total Inbound} & \textbf{Total Outbound} & \textbf{Intra Inbound Stars} & \textbf{Intra Inbound Watches} & \textbf{Intra Inbound Follows} & \textbf{Intra Outbound Stars} & \textbf{Intra Outbound Watches} & \textbf{Intra Outbound Follows} & \textbf{Inter Inbound Stars} & \textbf{Inter Inbound Watches} & \textbf{Inter Inbound Follows} & \textbf{Inter Outbound Stars} & \textbf{Inter Outbound Watches} & \textbf{Inter Outbound Follows} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{17}{r}{Continued on next page} \\
+\midrule
+\endfoot
+\bottomrule
+\endlastfoot
 abtion & 1 & 44 & 22 & 22 & 5 & 15 & 1 & 5 & 15 & 1 & 0 & 1 & 0 & 0 & 1 & 0 \\
 capgemini & 1 & 2 & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
 cbrain & 4 & 28 & 13 & 15 & 2 & 3 & 0 & 2 & 3 & 0 & 4 & 1 & 3 & 5 & 2 & 3 \\
@@ -54,11 +67,6 @@ uni-soft & 4 & 4 & 2 & 2 & 0 & 0 & 2 & 0 & 0 & 2 & 0 & 0 & 0 & 0 & 0 & 0 \\
 uptime & 1 & 51 & 24 & 27 & 6 & 5 & 12 & 6 & 5 & 12 & 1 & 0 & 0 & 3 & 0 & 1 \\
 yousee & 4 & 24 & 15 & 9 & 3 & 4 & 1 & 3 & 4 & 1 & 1 & 6 & 0 & 0 & 0 & 1 \\
 ørsted & 4 & 34 & 16 & 18 & 2 & 4 & 3 & 2 & 4 & 3 & 2 & 0 & 5 & 3 & 3 & 3 \\
-\bottomrule
-\end{tabularx}
-\begin{tablenotes}[para,flushleft]
-\footnotesize
-\item \textbf{Company Category:} 1 = Digital and marketing consultancies, 2 = Bespoke app companies, 3 = Data-broker- and infrastructure companies, 4 = Companies with specific digital part/app as part of service/product
-\end{tablenotes}
-\end{threeparttable}
-\end{table}
+\insertTableNotes
+\end{longtable}
+\end{ThreePartTable}

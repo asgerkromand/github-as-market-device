@@ -90,24 +90,22 @@ def summarize_company_interactions(edge_df: pd.DataFrame, network_type="attentio
     summary["Company Category"] = pd.to_numeric(summary["Company Category"], errors='coerce').fillna(0).astype(int)
     summary.columns = [f'\\textbf{{{col}}}' for col in summary.columns]
 
-    # Convert DataFrame to LaTeX table (no longtable to avoid environment issues)
-    # Decide caption and label based on network type
-    if network_type == "attention":
-        caption = "Attention Actions Summary (Company Level)"
-        label = "tab:attention_summary"
-    else:
-        caption = "Collaboration Edges Summary (Company Level)"
-        label = "tab:collaboration_summary"
+    # Determine layout logic
+    use_longtable = network_type == "attention"
     
-    # Define column format:
+    # Set caption/label
+    caption = "Attention Actions Summary (Company Level)" if use_longtable else "Collaboration Edges Summary (Company Level)"
+    label = "tab:attention_summary" if use_longtable else "tab:collaboration_summary"
+    
+    # Define LaTeX column format string
     first_col_width = '2cm'
     column_format = (
-        f'p{{{first_col_width}}} ' +                              # Company column: fixed width
-        '>{\\centering\\arraybackslash}X ' +                      # Company Category: centered
-        '>{\\raggedleft\\arraybackslash}X ' * (len(summary.columns) - 2)  # other numeric columns: right-aligned
+        f'p{{{first_col_width}}} ' +                              # First column fixed width
+        '>{\\centering\\arraybackslash}X ' +                      # Second column centered
+        '>{\\raggedleft\\arraybackslash}X ' * (len(summary.columns) - 2)  # Remaining numeric columns right-aligned
     )
     
-    # Generate LaTeX string
+    # Choose table environment
     latex_str = summary.to_latex(
         index=False,
         escape=False,
@@ -115,25 +113,48 @@ def summarize_company_interactions(edge_df: pd.DataFrame, network_type="attentio
         label=label,
         column_format=column_format,
         position='htbp',
+        longtable=use_longtable,
     )
     
-    # Post-process LaTeX string for formatting and notes
+    # Common replacements
     latex_str = latex_str.replace(
-        '\\begin{table}[htbp]',
-        '\\begin{table}[htbp]\n\\centering\n\\begin{threeparttable}'
-    ).replace(
-        '\\begin{tabular}',
-        '\\rowcolors{2}{gray!10}{white}\n\\begin{tabularx}{\\linewidth}'
-    ).replace(
-        '\\end{tabular}',
-        '\\end{tabularx}\n\\begin{tablenotes}[para,flushleft]\n\\footnotesize\n'
-        '\\item \\textbf{Company Category:} 1 = Digital and marketing consultancies, '
-        '2 = Bespoke app companies, 3 = Data-broker- and infrastructure companies, '
-        '4 = Companies with specific digital part/app as part of service/product\n'
-        '\\end{tablenotes}'
-    ).replace(
-        '\\end{table}',
-        '\\end{threeparttable}\n\\end{table}'
+        '\\textwidth',
+        '\\linewidth'
     )
     
+    if use_longtable:
+        # --- For ATTENTION network with threeparttablex + longtable layout ---
+        latex_str = latex_str.replace(
+            '\\begin{longtable}',
+            '\\begin{ThreePartTable}\n\\begin{TableNotes}\n\\footnotesize\n'
+            '\\item \\textbf{Company Category:} 1 = Digital and marketing consultancies, '
+            '2 = Bespoke app companies, 3 = Data-broker- and infrastructure companies, '
+            '4 = Companies with specific digital part/app as part of service/product\n'
+            '\\end{TableNotes}\n'
+            '\\rowcolors{3}{gray!10}{white}\n'
+            '\\begin{longtable}'
+        ).replace(
+            '\\end{longtable}',
+            '\\insertTableNotes\n\\end{longtable}\n\\end{ThreePartTable}'
+        )
+    else:
+        # --- For COLLABORATION network using threeparttable + tabularx ---
+        latex_str = latex_str.replace(
+            '\\begin{table}[htbp]',
+            '\\begin{table}[htbp]\n\\centering\n\\begin{threeparttable}'
+        ).replace(
+            '\\begin{tabular}',
+            '\\rowcolors{2}{gray!10}{white}\n\\begin{tabularx}{\\linewidth}'
+        ).replace(
+            '\\end{tabular}',
+            '\\end{tabularx}\n\\begin{tablenotes}[para,flushleft]\n\\footnotesize\n'
+            '\\item \\textbf{Company Category:} 1 = Digital and marketing consultancies, '
+            '2 = Bespoke app companies, 3 = Data-broker- and infrastructure companies, '
+            '4 = Companies with specific digital part/app as part of service/product\n'
+            '\\end{tablenotes}'
+        ).replace(
+            '\\end{table}',
+            '\\end{threeparttable}\n\\end{table}'
+        )
+
     return summary, latex_str
