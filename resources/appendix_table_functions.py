@@ -88,6 +88,7 @@ def summarize_company_interactions(edge_df: pd.DataFrame, network_type="attentio
     numeric_cols = summary.columns.difference(["Company", "Company Category"])
     summary[numeric_cols] = summary[numeric_cols].astype(int)
     summary["Company Category"] = pd.to_numeric(summary["Company Category"], errors='coerce').fillna(0).astype(int)
+    summary.columns = [f'\\textbf{{{col}}}' for col in summary.columns]
 
     # Convert DataFrame to LaTeX table (no longtable to avoid environment issues)
 
@@ -106,7 +107,7 @@ def summarize_company_interactions(edge_df: pd.DataFrame, network_type="attentio
 
     latex_str = summary.to_latex(
         index=False,
-        escape=True,
+        escape=False,
         caption=caption,
         label=label,
         column_format=column_format,
@@ -115,11 +116,16 @@ def summarize_company_interactions(edge_df: pd.DataFrame, network_type="attentio
 
     # Replace tabular with tabularx and add \textwidth
     latex_str = latex_str.replace(
-        '\\begin{tabular}',
-        '\\begin{tabularx}{\\textwidth}'
+    '\\begin{tabular}',
+    '\\rowcolors{2}{gray!10}{white}\n\\begin{tabularx}{\\textwidth}'
     ).replace(
         '\\end{tabular}',
         '\\end{tabularx}'
     ).replace('\\textwidth', '\\linewidth')
+
+    latex_str = latex_str.replace(
+    '\\begin{tabular}',
+    '\\rowcolors{2}{gray!10}{white}\n\\begin{tabularx}{\\textwidth}'
+)
 
     return summary, latex_str
