@@ -33,12 +33,10 @@ def get_column_format(network_type: str, ncols: int) -> str:
 
 def format_attention_table(latex_str: str, columns, caption: str, label: str, column_format: str) -> str:
     header_row = (
-        '\\rowcolor{gray!30}\n' +
         ' & '.join([f'\\textbf{{{col}}}' for col in columns]) + ' \\\\\n\\midrule\n'
     )
     continued_header = (
         '\\caption[]{(continued)} \\\\\n' +
-        '\\rowcolor{gray!30}\n' +
         ' & '.join([f'\\textbf{{{col}}}' for col in columns]) + ' \\\\\n\\midrule\n'
     )
 
@@ -52,8 +50,8 @@ def format_attention_table(latex_str: str, columns, caption: str, label: str, co
             '4 = Companies with specific digital part/app as part of service/product\n'
             '\\end{TableNotes}\n\n'
             '\\footnotesize\n\n'
-            '\\begin{longtable}' 
             '\n\\rowcolors{2}{white}{gray!30}\n'
+            '\\begin{longtable}' 
         ).replace(
             '\\toprule',
             f'\\caption{{{caption}}} \\label{{{label}}} \\\\\n{header_row}\\endfirsthead\n\n{continued_header}\\endhead\n'
