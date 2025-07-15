@@ -124,8 +124,12 @@ def summarize_company_interactions(edge_df: pd.DataFrame, network_type="attentio
         '\\begin{tabular}',
         '\\rowcolors{2}{gray!10}{white}\n\\begin{tabularx}{\\textwidth}'
     ).replace(
-        '\\end{tabular}',
-        '\\begin{tablenotes}[para,flushleft]\n\\footnotesize\n\\item \\textbf{Company Category:} 1 = Digital and marketing consultancies, 2 = Bespoke app companies, 3 = Data-broker- and infrastructure companies, 4 = Companies with specific digital part/app as part of service/product\n\\end{tablenotes}'
+    '\\end{tabularx}',
+    '\\end{tabularx}\n\\begin{tablenotes}[para,flushleft]\n\\footnotesize\n'
+    '\\item \\textbf{Company Category:} 1 = Digital and marketing consultancies, '
+    '2 = Bespoke app companies, 3 = Data-broker- and infrastructure companies, '
+    '4 = Companies with specific digital part/app as part of service/product\n'
+    '\\end{tablenotes}'
     ).replace(
         '\\end{table}',
         '\\end{threeparttable}\n\\end{table}'
