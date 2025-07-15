@@ -33,40 +33,50 @@ def get_column_format(network_type: str, ncols: int) -> str:
 
 def format_attention_table(latex_str: str, columns, caption: str, label: str, column_format: str) -> str:
     header = ' & '.join([f'\\textbf{{{col}}}' for col in columns]) + ' \\\\\n\\midrule\n'
-    
+
     first_head = (
         f'\\caption{{{caption}}} \\label{{{label}}} \\\\\n'
-        f'{header}\\endfirsthead\n'
-        '\\rowcolors{2}{white}{gray!30}\n'  # start coloring after first head
+        f'{header}'
+        '\\endfirsthead\n'
     )
     
     continued_head = (
-        '\\caption[]{(continued)} \\\\\n' +
-        f'{header}\\endhead\n'
-        '\\rowcolors{2}{white}{gray!30}\n'  # start coloring after continued head
+        '\\rowcolors{2}{white}{gray!30}\n'
+        '\\caption[]{(continued)} \\\\\n'
+        f'{header}'
+        '\\endhead\n'
+        '\\rowcolors{2}{white}{gray!30}\n'
     )
-    
-    return latex_str \
-        .replace(
-            '\\begin{longtable}',
-            '\\begin{ThreePartTable}\n'
-            '\\begin{TableNotes}\n\\footnotesize\n'
-            '\\item \\textbf{Company Category:} 1 = Digital and marketing consultancies, '
-            '2 = Bespoke app companies, 3 = Data-broker- and infrastructure companies, '
-            '4 = Companies with specific digital part/app as part of service/product\n'
-            '\\end{TableNotes}\n\n'
-            '\\footnotesize\n\n'
-            '\\begin{longtable}'
-        ).replace(
-            '\\toprule',
-            first_head + '\n' + continued_head
-        ).replace(
-            '\\bottomrule',
-            '\\bottomrule\n\\insertTableNotes'
-        ).replace(
-            '\\end{longtable}',
-            '\\end{longtable}\n\\end{ThreePartTable}'
-        )
+
+    # Add table notes and formatting before longtable
+    latex_str = latex_str.replace(
+        '\\begin{longtable}',
+        '\\begin{ThreePartTable}\n'
+        '\\begin{TableNotes}\n\\footnotesize\n'
+        '\\item \\textbf{Company Category:} 1 = Digital and marketing consultancies, '
+        '2 = Bespoke app companies, 3 = Data-broker- and infrastructure companies, '
+        '4 = Companies with specific digital part/app as part of service/product\n'
+        '\\end{TableNotes}\n\n'
+        '\\footnotesize\n\n'
+        '\\begin{longtable}'
+    )
+
+    # Replace only the first \toprule with first header
+    latex_str = latex_str.replace('\\toprule', first_head, 1)
+
+    # Insert continued header before \endhead
+    latex_str = latex_str.replace('\\endhead', continued_head)
+
+    # Add bottom rule and insertTableNotes
+    latex_str = latex_str.replace(
+        '\\bottomrule',
+        '\\bottomrule\n\\insertTableNotes'
+    ).replace(
+        '\\end{longtable}',
+        '\\end{longtable}\n\\end{ThreePartTable}'
+    )
+
+    return latex_str
 
 
 def format_collaboration_table(latex_str: str, caption: str, label: str) -> str:
