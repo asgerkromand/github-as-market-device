@@ -8,3 +8,7 @@ GithubAsMarketDevice.egg-info
 .envrc
 to-do.txt
 appendix_extra/
+resources/filepaths.py
+GithubAsMarketDevice.egg-info/
+resources/config.ini
+sandbox.ipynb

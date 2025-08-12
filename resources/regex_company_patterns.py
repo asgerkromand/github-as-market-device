@@ -1,4 +1,12 @@
+# Description:
+    # Regular expressions for company name matching
+    # Based on the companies from the two lists:
+    # - Initial list: '.../github_as_market_device/company_list/initial_list.csv'
+    # - Second tier companies: '.../github_as_market_device/company_list/second_tier_companies.csv'
+
 company_regex_dict = {
+    
+    # From ".../github_as_market_device/company_list/initial_list.csv'"
     'nodes': r'\b(nodes(?:[-_ ]\w+)?)\b',  # Matches "nodes" and variations like "nodes-abc", "nodes_xyz"
     'abtion': r'(abtion(?:[-_ ]\w+)?)',  # Matches "abtion" and variations like "abtion-abc", "abtion_xyz"
     'heyday': r'(heyday(?:[-_ ]\w+)?)',  # Matches "heyday" and variations like "heyday-abc", "heyday_xyz"
@@ -23,16 +31,19 @@ company_regex_dict = {
     'signifly': r'(signifly(?:[-_ ]\w+)?)',  # Matches "signifly" and variations like "signifly-abc", "signifly_xyz"
     'creuna': r'(creuna(?:[-_ ]\w+)?)',  # Matches "creuna" and variations like "creuna-abc", "creuna_xyz"
     'strømlin': r'(strømlin|stromlin)',  # Matches both "strømlin" and "stromlin" (considering possible replacement of ø with o)
-    'knowit': r'(know[-_ ]?it)',  # Matches "knowit", "know_it", "know-it"
     'must': r'\b(mu[-_ ]?st)\b',  # Matches "must", "mu-st", "mu_st" (strict boundary to avoid false positives)
     'netcompany': r'(netcompany(?:[-_ ]\w+)?)',  # Matches "netcompany" and variations like "netcompany-abc", "netcompany_xyz"
     'systematic': r'(systematic(?:[-_ ]\w+)?)',  # Matches "systematic" and variations like "systematic-abc", "systematic_xyz"
     'capgemini': r'(capgemini(?:[-_ ]\w+)?)',  # Matches "capgemini" and variations like "capgemini-abc", "capgemini_xyz"
     'sas institute': r'(sas[-_ ]?institute)',  # Matches "sas institute", "sas_institute", "sas-institute"
-    'fellowmind': r'(fellow[-_ ]?mind)',  # Matches "fellowmind", "fellow_mind", "fellow-mind"
     'eg a s': r'\b(eg[-_ ]?a[-_ ]?s|egdw|eg.dk)\b',  # Matches all variations of "eg a s", including "egdw", "eg.dk" (strict boundary)
     'kmd': r'(kmd(?:[-_ ]\w+)?)',  # Matches "kmd" and variations like "kmd-abc", "kmd_xyz"
     'adform': r'(adform)',  # Matches "adform" exactly (no variations needed)
+    'proactivedk': r'(proactivedk(?:[-_ ]\w+)?)',  # Matches "proactivedk" and variations like "proactivedk-abc", "proactivedk_xyz"
+
+    # From ".../github_as_market_device/company_list/second_tier_companies.csv'
+    'knowit': r'(know[-_ ]?it)',  # Matches "knowit", "know_it", "know-it"
+    'fellowmind': r'(fellow[-_ ]?mind)',  # Matches "fellowmind", "fellow_mind", "fellow-mind"
     'oxygen': r'\b(oxygen)\b',  # Matches "oxygen" exactly (no variations needed, strict boundary)
     'saxo bank': r'(saxo[-_ ]?bank)',  # Matches "saxo bank", "saxo_bank", "saxo-bank"
     'kabellmunk': r'(kabellmunk)',  # Matches "kabellmunk" exactly (no variations needed)
@@ -61,7 +72,6 @@ company_regex_dict = {
     'diviso': r'(diviso(?:[-_ ]\w+)?)',  # Matches "diviso" and variations like "diviso-abc", "diviso_xyz"
     'uni-soft': r'(uni[-_ ]?soft)',  # Matches "uni-soft", "uni_soft", "uni-soft"
     'delegateas': r'(delegateas(?:[-_ ]\w+)?)',  # Matches "delegateas" and variations like "delegateas-abc", "delegateas_xyz"
-    'proactivedk': r'(proactivedk(?:[-_ ]\w+)?)',  # Matches "proactivedk" and variations like "proactivedk-abc", "proactivedk_xyz"
     'monstarlab': r'(monstarlab(?:[-_ ]\w+)?)'  # Matches "monstarlab" and variations like "monstarlab-abc", "monstarlab_xyz"
 }
 

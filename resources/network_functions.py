@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import textwrap
 from matplotlib.lines import Line2D
+from matplotlib.figure import Figure
 import pandas as pd
 from typing import Literal, Optional, List, Tuple
 from pathlib import Path
@@ -16,28 +17,29 @@ fp_main = Path(
 )
 fp_main_output = Path(fp_main / "output")
 
+# Company category mapping
 company_category_map = {}
-with open(fp_main_output / "company_category_dict.jsonl", "r") as f:
+with open(fp_main_output / "company_category_map.jsonl", "r") as f:
     for line in f:
         record = json.loads(line)
-        company = record.get("company") or record.get("søgeord")  # whatever key holds company
-        category = record.get("category") or record.get("new_company_category")
+        company = record.get("company_search_keyword") 
+        category = record.get("company_category")
         if company and category is not None:
             company_category_map[company] = int(category)
 
 # Set seed
 SEED = 1704
 
-def calculate_weighted_density(directed_graph):
+def calculate_weighted_density(directed_graph: nx.DiGraph) -> float:
     """
     Calculate the weighted density of a directed graph.
     
     Weighted density = sum of edge weights / number of possible directed edges (n*(n-1))
     Self-loops are excluded from both the edge set and the possible edge count.
     
-    Parameters:
+    Args:
         directed_graph (networkx.DiGraph): A directed graph with edge weights.
-    
+
     Returns:
         float: Weighted density of the graph.
     """
@@ -52,19 +54,55 @@ def calculate_weighted_density(directed_graph):
     
     return weighted_density
 
-class CompanyUserLookup:
+class CompanyLookup:
     def __init__(self, df: pd.DataFrame, company_category_map: dict = company_category_map):
+        """
+        Initialize the CompanyLookup with company data.
+
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            DataFrame containing company information. Must include a "user_login" column.
+        company_category_map : dict, optional
+            Mapping of company names to their category information. Defaults to the global
+            ``company_category_map``.
+
+        Notes
+        -----
+        This constructor also builds:
+        - `self.df`: the provided DataFrame
+        - `self.company_category`: the provided mapping
+        - `self.users`: set of unique values from the "user_login" column
+        """
         self.df = df
         self.company_category = company_category_map
         self.users = set(df["user_login"].unique())
 
     def get_user_company(self, user: Optional[str]) -> Optional[str]:
+        """
+        Get the company associated with a user. If the user is not found, return None.
+
+        Args:
+            user (str): The user login for which to retrieve the company.
+
+        Returns:
+            Optional[str]: The company associated with the user, or None if not found.
+        """
         if user not in self.users:
             return None
         company = self.df.loc[self.df["user_login"] == user, "inferred_company"]
         return company.values[0] if not company.empty else None
 
-    def get_company_category(self, company: Optional[str]) -> int:
+    def get_company_category(self, company: Optional[str]) -> Optional[int]:
+        """
+        Get the category associated with a company.
+
+        Args:
+            company (str): The company name for which to retrieve the category.
+
+        Returns:
+            Optional[int]: The category associated with the company, or None if not found.
+        """
         return self.company_category.get(company) if company else None
 
 
@@ -72,7 +110,7 @@ class NetworkEdgeListConstructor:
     CATEGORY_LABELS = {
         1: "1 Digital and marketing consultancies",
         2: "2 Bespoke app companies",
-        3: "3 Data-broker- and infrastructure companies",
+        3: "3 Data broker- and infrastructure companies",
         4: "4 Companies with specific digital part/app as part of service/product",
     }
 
@@ -81,8 +119,27 @@ class NetworkEdgeListConstructor:
         df: pd.DataFrame,
         company_category_map: dict = company_category_map,
     ):
+        """
+        Initialize the NetworkEdgeListConstructor with company data.
+
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            DataFrame containing company information.
+        company_category_map : dict, optional
+            Mapping of company names to their category information. Defaults to the global
+            ``company_category_map``.
+        
+        Notes
+        -----
+        This constructor also builds:
+        - `self.df`: the provided DataFrame
+        - `self.lookup`: a CompanyLookup instance for user-company mapping
+        - `self.company_label`: labels for company categories
+        - `self.edge_types_in`: types of incoming edges
+        """
         self.df = df
-        self.lookup = CompanyUserLookup(df, company_category_map)
+        self.lookup = CompanyLookup(df, company_category_map)
         self.company_label = self.CATEGORY_LABELS
         self.edge_types_in = ["forks_in", "stars_in", "watches_in", "follows_in"]
         self.edge_types_out = ["forks_out", "stars_out", "watches_out", "follows_out"]
@@ -96,24 +153,42 @@ class NetworkEdgeListConstructor:
         action: str,
         item: dict,
     ) -> Optional[dict]:
+        """
+        Build an edge dictionary from the provided parameters.
+
+        Args:
+            src_user (str): The source user for the edge.
+            target_user (str): The target user for the edge.
+            action (str): The action type for the edge.
+            item (dict): The item data associated with the edge.
+
+        Returns:
+            Optional[dict]: The constructed edge dictionary, or None if invalid.
+        """
+        # Validate input
         if item is None:
             return None
 
+        # Extract relevant information from the item
         repo_name = item.get("repo_name")
         created_at = item.get("created_at")
         edge_repo = f"{repo_name}/{src_user}" if repo_name and src_user else None
 
+        # Lookup companies for users
         src_company = self.lookup.get_user_company(src_user)
         target_company = self.lookup.get_user_company(target_user)
         if not src_company or not target_company:
             return None
 
+        # Compute intra- and inter-company edge types
         d_intra = int(src_company == target_company)
         d_inter = int(src_company != target_company)
 
+        # Get company categories and labels
         src_company_category = self.lookup.get_company_category(src_company)
         target_company_category = self.lookup.get_company_category(target_company)
 
+        # Get company labels
         src_company_label = self.company_label.get(src_company_category, "NA")
         target_company_label = self.company_label.get(target_company_category, "NA")
 
@@ -134,29 +209,45 @@ class NetworkEdgeListConstructor:
         }
 
     def _process_edges(self, direction: Literal["in", "out"]) -> List[dict]:
+        """
+        Process edges in the specified direction.
+
+        Args:
+            direction (Literal["in", "out"]): The direction of the edges to process.
+
+        Returns:
+            List[dict]: A list of processed edge dictionaries.
+        """
+        # Initialize edge list
         edges = []
         edge_types = self.edge_types_in if direction == "in" else self.edge_types_out
 
+        # Iterate over DataFrame rows
         for _, row in self.df.iterrows():
+            # Get user login
             user_login = row.get("user_login")
 
+            # Iterate over action types
             for col in edge_types:
                 action = col.split("_")[0]
-                items = row.get(col)
-                if items is None or len(items) == 0:
+                github_connections = row.get(col)
+                if github_connections is None or len(github_connections) == 0:
                     continue
-                
-                for item in items:
+
+                # Iterate over GitHub connections 
+                for connection in github_connections:
+                    # Get source and target users
                     if direction == "in":
-                        src_user = item.get("owner_login")
+                        src_user = connection.get("owner_login")
                         target_user = user_login
                     else:
                         src_user = user_login
-                        target_user = item.get("owner_login")
+                        target_user = connection.get("owner_login")
 
                     if not src_user or not target_user:
                         continue
 
+                    # Build edge dictionary
                     edge_dict = self._build_edge_dict(src_user, target_user, action, item)
                     if edge_dict:
                         edges.append(edge_dict)
@@ -164,6 +255,15 @@ class NetworkEdgeListConstructor:
         return edges
 
     def _build_user_level_edgelist(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """
+        Build user-level edge list DataFrames for different action types.
+
+        Args:
+            direction (Literal["in", "out"]): The direction of the edges to process.
+
+        Returns:
+            List[dict]: A list of processed edge dictionaries.
+        """
         edges_in = self._process_edges("in")
         edges_out = self._process_edges("out")
         user_edges_df = pd.DataFrame(edges_in + edges_out)
@@ -182,11 +282,31 @@ class NetworkEdgeListConstructor:
         return user_edges_df, attention_df, collaboration_df
 
     def get_edge_lists(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """
+        Get user-level edge lists for different action types.
+
+        Returns:
+            Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: DataFrames for all actions, attention actions, and collaboration actions.
+        """
         return self._build_user_level_edgelist()
 
 
 class GraphConstructor:
     def __init__(self, edge_list_df: pd.DataFrame, graph_type: Literal["attention", "collaboration"] = 'attention'):
+        """
+        Initialize the GraphConstructor with edge list DataFrame and graph type.
+
+        Args    
+        ----
+            edge_list_df (pd.DataFrame): The edge list DataFrame.
+            graph_type (Literal["attention", "collaboration"]): The type of graph to construct.
+
+        Notes
+        -----
+        This constructor also builds:
+        - A mapping of user IDs to their company information.
+        - A mapping of company IDs to their category information.
+        """
         self.df = edge_list_df
         self.attention_actions = ["follows", "stars", "watches"]
         self.collaboration_actions = ["forks"]
@@ -204,9 +324,12 @@ class GraphConstructor:
         # Build company-category mapping once on init
         self.company_category_map = self._build_company_info_map()
 
-    def _build_company_info_map(self):
+    def _build_company_info_map(self) -> dict:
         """
         Build a mapping from each unique company to a dict with 'category' and 'label'.
+
+        Returns:
+            dict: A mapping of company names to their category and label.
         """
         src = self.df_subset[['src_company', 'src_company_category', 'src_company_label']]
         tgt = self.df_subset[['target_company', 'target_company_category', 'target_company_label']]
@@ -230,6 +353,12 @@ class GraphConstructor:
         return company_info_map
 
     def build_user_graph(self) -> nx.DiGraph:
+        """
+        Build a user-user interaction graph from the edge list DataFrame.
+
+        Returns:
+            nx.DiGraph: A directed graph representing user-user interactions.
+        """
         # Count all occurrences of actions between users (including repeats)
         edge_action_counts = defaultdict(lambda: {action: 0 for action in self.all_actions})
 
@@ -250,6 +379,16 @@ class GraphConstructor:
         return G
 
     def aggregate_to_company_graph(self, user_graph: nx.DiGraph, actions_to_include: list) -> nx.DiGraph:
+        """
+        Aggregate user-user interactions into company-company interactions.
+
+        Args:
+            user_graph (nx.DiGraph): The user-user interaction graph.
+            actions_to_include (list): List of actions to include in the aggregation.
+
+        Returns:
+            nx.DiGraph: A directed graph representing company-company interactions.
+        """
         user_to_company = {}
         for _, row in self.df_subset.iterrows():
             user_to_company[row["src"]] = row["src_company"]
@@ -294,6 +433,16 @@ class GraphConstructor:
         return G_company
 
     def annotate_edges_with_intra_inter(self, G: nx.DiGraph, level="user") -> nx.DiGraph:
+        """
+        Annotate edges with intra- and inter-level information.
+
+        Args:
+            G (nx.DiGraph): The input directed graph.
+            level (str): The level of annotation ("user" or "company").
+
+        Returns:
+            nx.DiGraph: The annotated directed graph.
+        """
         if level == "user":
             user_to_company = {}
             for _, row in self.df_subset.iterrows():
@@ -334,7 +483,7 @@ class NetworkVisualizer:
     DEFAULT_NODE_COLORS = {
         "1 Digital and marketing consultancies": '#003f5c',
         "2 Bespoke app companies": '#665191',
-        "3 Data-broker- and infrastructure companies": '#d45087',
+        "3 Data broker- and infrastructure companies": '#d45087',
         "4 Companies with specific digital part/app as part of service/product": '#ff7c43',
     }
 
@@ -345,37 +494,87 @@ class NetworkVisualizer:
     FONT_SIZE = 11
     FONT_WEIGHT = "bold"
 
-    def __init__(self, G, edgelist=None, graph_type: Literal["attention", "collaboration"] = 'attention'):
+    def __init__(self, G, edgelist: pd.DataFrame | None, graph_type: Literal["attention", "collaboration"] = 'attention'):
+        """
+        Initialize the NetworkVisualizer.
+
+        Parameters
+        ----------
+            G (nx.DiGraph): The input directed graph.
+            edgelist (pd.DataFrame): The edge list DataFrame.
+            graph_type (Literal["attention", "collaboration"]): The type of graph to visualize.
+
+        Notes
+        -----
+        This constructor also sets the default node colors for the visualization.
+        """
         self.G = G
         self.graph_type = graph_type
         self.edgelist = self._filter_edgelist(edgelist)
         self.node_colors = self.DEFAULT_NODE_COLORS
 
-    def _filter_edgelist(self, edgelist):
+    def _filter_edgelist(self, edgelist: pd.DataFrame | None) -> pd.DataFrame | None:
+        """
+        Filter the edge list based on the graph type.
+
+        Args:
+            edgelist (pd.DataFrame | None): The edge list DataFrame to filter.
+
+        Returns:
+            pd.DataFrame | None: The filtered edge list DataFrame or None.
+        """
+        # If the edge list is None, return None
         if edgelist is None:
             return None
+        
+        # Filter based on the graph type
         if self.graph_type == "attention":
             return edgelist[edgelist["action"].isin(self.ATTENTION_ACTIONS)]
         elif self.graph_type == "collaboration":
             return edgelist[edgelist["action"].isin(self.COLLABORATION_ACTIONS)]
         raise ValueError("graph_type must be 'attention' or 'collaboration'")
 
-    def layout(self, layout_type="spring_layout", seed=SEED):
+    def layout(self, layout_type="spring_layout", seed=SEED) -> dict:
+        """
+        Compute the layout for the graph visualization.
+
+        Args:
+            layout_type (str): The type of layout to use.
+            seed (int): The random seed for layout initialization.
+
+        Returns:
+            dict: The positions of the nodes in the layout.
+        """
+        # Compute the layout based on the graph type
         if self.graph_type == "attention":
             k = 1.5
         elif self.graph_type == "collaboration":
             k = 1.1
         if layout_type == "spring_layout":
             return nx.spring_layout(self.G, seed=seed, k=k, iterations=50, weight="weight")
-        raise ValueError(f"Layout '{layout_type}' is not supported. Try 'spring_layout'.")
+        else:
+            raise ValueError(f"Layout '{layout_type}' is not supported. Try 'spring_layout'.")
 
-    def draw_nodes(self, pos, ax, alpha=1):
+    def draw_nodes(self, pos: dict, ax: plt.Axes, alpha=1) -> None:
+        """
+        Draw the nodes of the graph.
+
+        Args:
+            pos (dict): The positions of the nodes.
+            ax (plt.Axes): The matplotlib axes to draw on.
+            alpha (float): The transparency level of the nodes.
+
+        Returns:
+            None 
+        """
+        # Compute node sizes and colors
         degrees = dict(self.G.degree)
         node_sizes = [500 + 100 * degrees.get(n, 0) for n in self.G.nodes]
         node_colors = [
             self.node_colors.get(self.G.nodes[n].get("label", ""), "#000000") for n in self.G.nodes
         ]
 
+        # Draw the nodes
         nx.draw_networkx_nodes(
             self.G,
             pos,
@@ -386,56 +585,143 @@ class NetworkVisualizer:
             edgecolors="black",
         )
 
-    def _filter_edges(self, edge_type):
+    def _filter_edges(self, edge_type: str) -> list[tuple]:
+        """
+        Filter the edges of the graph based on the edge type.
+
+        Args:
+            edge_type (str): The type of edges to filter ("inter" or "intra").
+
+        Returns:
+            list[tuple]: A list of filtered edges as (source, target, data) tuples.
+        """
+        # Determine the key for filtering
         key = f"d_{edge_type}_level"
         if edge_type not in {"inter", "intra"}:
             raise ValueError("Edge type must be either 'inter' or 'intra'")
         return [(u, v, d) for u, v, d in self.G.edges(data=True) if d.get(key) == 1]
 
-    def _log_scale_weights(self, edges):
+    def _log_scale_weights(self, edges: list[tuple]) -> dict[tuple, float]:
+        """
+        Apply log scaling to the weights of the edges.
+
+        Args:
+            edges (list[tuple]): A list of edges as (source, target, data) tuples.
+
+        Returns:
+            dict[tuple, float]: A dictionary mapping edges to their log-scaled weights.
+        """
+        # Compute log weights
         if not edges:
             return {}
         log_weights = {(u, v): np.log(d.get("weight", 1) + 1) for u, v, d in edges}
         min_w, max_w = min(log_weights.values()), max(log_weights.values())
+
+        # If all weights are identical, avoid division by zero
         if min_w == max_w:
             return {edge: 2 for edge in log_weights}
+
+        # If all weights are identical, avoid division by zero
         return {
             edge: 1 + (w - min_w) / (max_w - min_w) * 3
             for edge, w in log_weights.items()
         }
 
-    def draw_edges(self, pos, ax, alpha=1):
+    def draw_edges(self, pos: dict, ax: plt.Axes, alpha: float = 1) -> None:
+        """
+        Draw all graph edges (inter and intra) with different styles.
+
+        Args:
+            pos (dict): The positions of the nodes.
+            ax (plt.Axes): The matplotlib axes to draw on.
+            alpha (float): The transparency level of the edges.
+        """
+        # Get edge lists
         inter_edges = self._filter_edges("inter")
         intra_edges = self._filter_edges("intra")
         all_edges = inter_edges + intra_edges
 
+        # Compute edge widths and attach them as attributes
         edge_widths = self._log_scale_weights(all_edges)
         nx.set_edge_attributes(self.G, edge_widths, "edge_width")
 
-        def draw(edge_list, style, arrowsize, connectionstyle=None):
-            kwargs = dict(
-                G=self.G,
+        # Draw each category of edges
+        if inter_edges:
+            self._draw_edge_list(
+                edge_list=inter_edges,
                 pos=pos,
                 ax=ax,
-                edgelist=edge_list,
-                width=[edge_widths[(u, v)] for u, v, _ in edge_list],
-                edge_color="black",
+                edge_widths=edge_widths,
                 alpha=alpha,
-                style=style,
-                arrows=True,
-                arrowstyle="->",
-                arrowsize=arrowsize,
+                style="solid",
+                arrowsize=40,
+                connectionstyle="arc3,rad=0.1",
             )
-            if connectionstyle is not None:
-                kwargs["connectionstyle"] = connectionstyle
-            nx.draw_networkx_edges(**kwargs)
-
-        if inter_edges:
-            draw(inter_edges, style="solid", arrowsize=40, connectionstyle="arc3,rad=0.1")
         if intra_edges:
-            draw(intra_edges, style="dashed", arrowsize=20)
+            self._draw_edge_list(
+                edge_list=intra_edges,
+                pos=pos,
+                ax=ax,
+                edge_widths=edge_widths,
+                alpha=alpha,
+                style="dashed",
+                arrowsize=20,
+            )
 
-    def draw_labels(self, pos, ax, verticalalignment="top", horizontalalignment="right"):
+    def _draw_edge_list(
+        self,
+        edge_list: list,
+        pos: dict,
+        ax: plt.Axes,
+        edge_widths: dict,
+        alpha: float,
+        style: str,
+        arrowsize: int,
+        connectionstyle: str | None = None,
+    ) -> None:
+        """
+        Helper to draw a list of edges with given style and attributes.
+
+        Args:
+            edge_list (list): The list of edges to draw.
+            pos (dict): The positions of the nodes.
+            ax (plt.Axes): The matplotlib axes to draw on.
+            edge_widths (dict): The widths of the edges.
+            alpha (float): The transparency level of the edges.
+            style (str): The style of the edges (e.g., "solid", "dashed").
+            arrowsize (int): The size of the arrowheads.
+            connectionstyle (str | None): The connection style for the edges.
+        """
+        # Prepare keyword arguments for drawing edges
+        kwargs = dict(
+            G=self.G,
+            pos=pos,
+            ax=ax,
+            edgelist=edge_list,
+            width=[edge_widths[(u, v)] for u, v, _ in edge_list],
+            edge_color="black",
+            alpha=alpha,
+            style=style,
+            arrows=True,
+            arrowstyle="->",
+            arrowsize=arrowsize,
+        )
+        # Add connection style if specified
+        if connectionstyle is not None:
+            kwargs["connectionstyle"] = connectionstyle
+        nx.draw_networkx_edges(**kwargs)
+
+
+    def draw_labels(self, pos, ax, verticalalignment="top", horizontalalignment="right") -> None:
+        """
+        Draw node labels on the graph.
+
+        Args:
+            pos (dict): The positions of the nodes.
+            ax (plt.Axes): The matplotlib axes to draw on.
+            verticalalignment (str): The vertical alignment of the labels.
+            horizontalalignment (str): The horizontal alignment of the labels.
+        """
         labels = {n: n for n in self.G.nodes}
         nx.draw_networkx_labels(
             self.G,
@@ -450,10 +736,21 @@ class NetworkVisualizer:
             ax=ax,
         )
 
-    def get_legend_handles(self, wrap_width=30):
+    def get_legend_handles(self, wrap_width=30) -> list[Line2D]:
+        """
+        Get legend handles for the node colors.
+
+        Args:
+            wrap_width (int): The width to wrap legend text.
+
+        Returns:
+            list[Line2D]: A list of legend handles.
+        """
+        # Helper function to wrap text
         def wrap_text(text):
             return "\n".join(textwrap.wrap(text, width=wrap_width))
 
+        # Create legend handles
         return [
             Line2D(
                 [0], [0],
@@ -465,26 +762,20 @@ class NetworkVisualizer:
             )
             for label, color in self.node_colors.items()
         ]
-    
-    def calculate_densities(self):
-        # Create a copy of the graph to avoid modifying the original
-        graph = self.G.copy()
 
-        # Remove self-loops
-        self_loops = list(nx.selfloop_edges(graph))
-        graph.remove_edges_from(self_loops)
+    def add_network_stats(self, ax: plt.Axes, edgelist: pd.DataFrame, pos=(0.02, 0.02), fontsize=14) -> None:
+        """
+        Adds network statistics to the plot.
 
-        # Calculate unweighted density
-        number_of_nodes = graph.number_of_nodes()
-        possible_edges = number_of_nodes * (number_of_nodes - 1)
+        Args:
+            ax (plt.Axes): The matplotlib axes to draw on.
+            edgelist (pd.DataFrame): The edge list DataFrame.
+            pos (tuple): The position to place the text.
+            fontsize (int): The font size for the text.
 
-        # Calculate weighted density
-        sum_of_weights = sum(data['weight'] for u, v, data in graph.edges(data=True))
-        weighted_density = sum_of_weights / possible_edges if possible_edges != 0 else 0
-
-        return weighted_density
-
-    def add_network_stats(self, ax, edgelist, pos=(0.02, 0.02), fontsize=14):
+        Returns:
+            None
+        """
         # User level
         no_users = len(pd.unique(edgelist[['src', 'target']].values.ravel()))
         no_unique_inter_user_to_user = edgelist[edgelist['d_inter_level'] == 1][['src', 'target']].drop_duplicates().shape[0]
@@ -503,6 +794,7 @@ class NetworkVisualizer:
         # Weighted density 
         weighted_density = calculate_weighted_density(self.G)
 
+        # Prepare the text for the statistics
         stats_text = [
             r"$\mathit{Network\ topology}$",
             "",
@@ -516,6 +808,7 @@ class NetworkVisualizer:
             f"Weighted density: {weighted_density:.4f}",
         ]
 
+        # Add the statistics text to the plot
         ax.text(
             *pos,
             "\n".join(stats_text),
@@ -524,7 +817,20 @@ class NetworkVisualizer:
             transform=ax.transAxes,
         )
 
-    def create_plot(self, layout_type="spring_layout", figsize=(20, 20), seed=SEED, title="Network"):
+    def create_plot(self, layout_type="spring_layout", figsize=(20, 20), seed=SEED, title="Network") -> Figure:
+        """
+        Creates a network plot.
+
+        Args:
+            layout_type (str): The layout type for the network.
+            figsize (tuple): The figure size.
+            seed (int): The random seed for layout.
+            title (str): The title of the plot.
+
+        Returns:
+            fig: The matplotlib figure object.
+        """
+        # Create the figure and axis
         fig, ax = plt.subplots(figsize=figsize)
         pos = self.layout(layout_type=layout_type, seed=seed)
         self.draw_nodes(pos, ax)
@@ -532,6 +838,7 @@ class NetworkVisualizer:
         self.draw_labels(pos, ax)
         ax.set_axis_off()
 
+        # Create the legend
         legend = ax.legend(
             handles=self.get_legend_handles(),
             title=r"$\mathit{Company\ categories}$",
@@ -541,23 +848,34 @@ class NetworkVisualizer:
         )
         legend._legend_box.align = "left"  # type: ignore
 
+        # Add network statistics
         if self.edgelist is not None:
             self.add_network_stats(ax, self.edgelist)
 
+        # Add plot title
         plt.title(title, fontsize=20)
 
         return fig
-    
-    def save_plot_as_png(self, fig, filename):
+
+    def save_plot_as_png(self, fig: Figure, filename: str):
         """
         Saves the plot as a PNG file with high resolution.
-        Parameters:
-        - fig: The matplotlib figure object to save.
-        - filename: The name of the file to save the plot as.
+
+        Args:
+            fig: The matplotlib figure object to save.
+            filename: The name of the file to save the plot as.
+        
+        Returns:
+            None
         """
+        # Create the output folder if it doesn't exist
         output_folder = fp_main_output / "network_plots"
         output_folder.mkdir(parents=True, exist_ok=True)
+
+        # Get the current timestamp
         _datetime = datetime.now().strftime("%Y%m%d_%H%M")
-        filepath = output_folder / f"{filename}_{_datetime}.png" 
+
+        # Create the file path and save the figure
+        filepath = output_folder / f"{filename}_{_datetime}.png"
         fig.savefig(filepath, format='png', dpi=300, bbox_inches='tight')
         print(f"Plot saved as {filename}")
