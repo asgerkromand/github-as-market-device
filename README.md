@@ -7,11 +7,10 @@
 **DOI:** [doi.org/xxxx](https://doi.org/xxxx)
 
 ---
+
 [TO-DO]
 ## 📚 Abstract
 > [Abstract]
-
----
 
 ## 📂 Repository Structure
 ```
@@ -29,8 +28,6 @@
 ├── requirements.txt    # Dependency file using pip
 └── uv.lock             # Dependency file for using uv sync
 ```
-
----
 
 ## 🛠 Installation & Environment
 
@@ -104,15 +101,12 @@ The appendix -- located at "appendix/appendix.pdf" -- is generated using Overlea
 
 The tables in the overleaf document are based on the data columns located in "appendix/appendix_files".
 
----
-
 ## 📌 Notes
 
 ### Note on reproducibility
 
 The data files in this repository are not the original datasets used to produce the tables and networks presented in the paper. The original data was collected at an earlier stage, but running the code now would generate similar data using the same methodological steps, and is therefore reproducible in this sense. Some output files are dummy files included to protect personal data.
 
----
 
 ## 📜 Citation
 If you use this code or data, please cite:
@@ -129,13 +123,9 @@ If you use this code or data, please cite:
 }
 ```
 
----
-
 ## 📄 License
 
 MIT License. For specification see file "LICENSE".
-
----
 
 ## 🙌 Acknowledgments
 
