@@ -1,7 +1,7 @@
 # 📄 Github as Market Device
 **Authors:** Asger Balsby Kromand, Eva Iris Otto & Anders Blok
 
-**Journal/Conference:** Consumption Markets & Culture
+**Journal:** Consumption Markets & Culture
 
 [**DOI:** [doi.org/xxxx](https://doi.org/xxxx)]
 
@@ -17,8 +17,8 @@
 ├── appendix/           # Datasets or download scripts
 ├── notebooks/          # Jupyter notebooks for scraping and analysis
 ├── outputs/            # Output files: datasets, plots and log
-├── results/            # Figures, tables, and outputs
 ├── resources/          # Codebase - functions, scripts, and config.ini
+├── results/            # Figures and tables from the paper
 ├── .python-version
 ├── CITATION.cff
 ├── github_terminology.txt  # Describing star, follow, follow
@@ -138,7 +138,7 @@ MIT License. For specification see file "LICENSE".
 
 ## 🙌 Acknowledgments
 
-This project is part of the [DISTRACT project](https://sodas.ku.dk/projects/distract/). DISTRACT is funded by an Advanced Grant from the European Research Council. Period: 1 January 2020 to 31 December 2024. 
+This paper is part of the [DISTRACT project](https://sodas.ku.dk/projects/distract/). DISTRACT is funded by an Advanced Grant from the European Research Council. Period: 1 January 2020 to 31 December 2024. 
 
 Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Research Council Executive Agency. Neither the European Union nor the granting authority can be held responsible for them.
 
