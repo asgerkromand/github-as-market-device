@@ -94,9 +94,8 @@ The scraping, sorting, vizualising and analysis is performed in the notebooks, a
 
 In the notebooks 1-5, the scraping and sorting of data happens. In notebook 6 the networks i visualized, and in notebook 7 the edges are explored more qualitatively. Lastly, the descriptive tables for both the analysis part and the additional tables for the appendix are produced.
 
-**NB:** These notebooks represent the methodological pipeline use in our paper. Running them now, will *not* reproduce the original dataset used to produce the networks and tables in our paper.
-
-*In order to run the pipeline, you need to manually input to files:* An initial company list (.csv) to input for the notebook "1. Collecting first-tier users.ipynb", and a second-tier company list (also .csv) as input for the notebook "2. Creating first-tier dataset.ipynb". For examples: See "output/second_tier_companies.csv" and "output/initial_list.csv".
+> These notebooks represent the methodological pipeline use in our paper. Running them now, will *not* reproduce the original dataset used to produce the networks and tables in our paper.
+> In order to run the pipeline, you need to manually input to files:* An initial company list (.csv) to input for the notebook "1. Collecting first-tier users.ipynb", and a second-tier company list (also .csv) as input for the notebook "2. Creating first-tier dataset.ipynb". For examples: See "output/second_tier_companies.csv" and "output/initial_list.csv".
 
 ### Generation of appendix
 
