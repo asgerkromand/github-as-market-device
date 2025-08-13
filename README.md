@@ -1,7 +1,9 @@
 # 📄 Github as Market Device
-**Authors:** Asger Balsby Kromand, Eva Iris Otto & Anders Blok \\
-**Journal/Conference:** Consumption Markets & Culture \\
-[**DOI:** [doi.org/xxxx](https://doi.org/xxxx)] 
+**Authors:** Asger Balsby Kromand, Eva Iris Otto & Anders Blok
+
+**Journal/Conference:** Consumption Markets & Culture
+
+[**DOI:** [doi.org/xxxx](https://doi.org/xxxx)]
 
 ---
 [TO_DO]
