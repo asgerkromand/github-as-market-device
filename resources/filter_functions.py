@@ -247,19 +247,6 @@ def filter_ties(row, ties_columns):
 
 
 def resolve_multiple_companies(df: pd.DataFrame, output_path: str) -> pd.DataFrame:
-    """
-    Resolve ambiguous inferred companies in a DataFrame by:
-    - Automatically reducing single-element lists to strings.
-    - Prompting the user for manual resolution of multiple matches.
-    - Skipping entries if no input is provided.
-
-    Args:
-        df (pd.DataFrame): The DataFrame containing user data.
-        output_path (str): The path to the output file for resolved companies.
-
-    Returns:
-        pd.DataFrame: The updated DataFrame with resolved companies.
-    """
     resolved_users = _load_resolved_users(output_path)
 
     try:
@@ -267,26 +254,28 @@ def resolve_multiple_companies(df: pd.DataFrame, output_path: str) -> pd.DataFra
             user_login = row["user_login"]
             inferred = row["inferred_company"]
 
+            # Clear previous output before showing the next user
+            clear_output(wait=True)
+
             # Skip if already resolved
             if user_login in resolved_users:
                 df.at[idx, "inferred_company"] = resolved_users[user_login]
                 continue
 
-            # If it's a single-item list, auto-resolve to string
-            if isinstance(inferred, list):
-                if len(inferred) == 1:
-                    df.at[idx, "inferred_company"] = inferred[0]
-                    continue
-                elif len(inferred) > 1:
-                    resolved_company = _prompt_user_to_resolve(row)
-                    if resolved_company:
-                        df.at[idx, "inferred_company"] = resolved_company
-                        resolved_users[user_login] = resolved_company
-                        _save_resolved_company(
-                            output_path, user_login, resolved_company
-                        )
-                    else:
-                        print("Skipped. No changes saved for this user.")
+            # Auto-resolve if single-element list
+            if isinstance(inferred, list) and len(inferred) == 1:
+                df.at[idx, "inferred_company"] = inferred[0]
+                continue
+
+            # If multiple companies, prompt user
+            if isinstance(inferred, list) and len(inferred) > 1:
+                resolved_company = _prompt_user_to_resolve(row)
+                if resolved_company:
+                    df.at[idx, "inferred_company"] = resolved_company
+                    resolved_users[user_login] = resolved_company
+                    _save_resolved_company(output_path, user_login, resolved_company)
+                else:
+                    print(f"{user_login} — skipped, no changes saved.")
     except KeyboardInterrupt:
         print("\n[INFO] Annotation manually interrupted. Exiting safely.")
 
@@ -336,27 +325,13 @@ def _save_resolved_company(
 
 def _prompt_user_to_resolve(row: pd.Series) -> str:
     """
-    Display relevant user info and prompt for resolution (Jupyter-friendly, clears prior output).
-
-    Args:
-        row (pd.Series): The DataFrame row containing user information.
-
-    Returns:
-        str: The resolved company name or an empty string if skipped.
+    Display relevant user info and prompt for resolution (Jupyter-friendly).
     """
     user_login = row["user_login"]
 
-    # Clear previous output
-    clear_output(wait=True)
-
-    # Display new output
     print("=" * 50)
     print(f"[{user_login}] has multiple company matches:")
     print(f"Inferred Companies: {row['inferred_company']}")
-
-    print("\nMatched Strings:")
-    for company, matches in row.get("matched_company_strings", {}).items():
-        print(f"  {company}: {matches}")
 
     print("\nBio Information:")
     for col in [

@@ -19,7 +19,11 @@ from github.Repository import Repository
 from github.AuthenticatedUser import AuthenticatedUser
 
 # Custom functions
-from resources.filter_functions import infer_if_dk_and_company, user_is_from_dk, search_for_company
+from resources.filter_functions import (
+    infer_if_dk_and_company,
+    user_is_from_dk,
+    search_for_company,
+)
 
 config = configparser.ConfigParser(inline_comment_prefixes=("#", ";"))
 config.read(Path(__file__).parent / "config.ini")
@@ -55,7 +59,7 @@ def collect_github_token(
     token_key = "access_token"
     try:
         github_token = config.get(section, token_key)
-        print("GitHub access token collected from config") 
+        print("GitHub access token collected from config")
     except (configparser.NoOptionError, configparser.NoSectionError):
         return ""
 
@@ -71,6 +75,7 @@ github_access_token = collect_github_token(config)
 
 
 # Ratelimiter decorator
+
 
 def ratelimiter(func):
     """
@@ -102,7 +107,9 @@ def ratelimiter(func):
         new_threshold = get_threshold(current_max_rate)
         if github_scraper.rate_limit_threshold != new_threshold:
             github_scraper.rate_limit_threshold = new_threshold
-            print(f"[NEW] GitHub ratelimit threshold set to {new_threshold} (max rate: {current_max_rate})")
+            print(
+                f"[NEW] GitHub ratelimit threshold set to {new_threshold} (max rate: {current_max_rate})"
+            )
 
         github_scraper.github_max_rate = current_max_rate
         remaining_requests = github_scraper.github.rate_limiting[0]
@@ -113,16 +120,21 @@ def ratelimiter(func):
             wait_time = time_before_reset + 90  # 1.5 minutes buffer
 
             if wait_time > 0:
-                wake_up_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time() + wait_time))
-                print(f"[WAIT] Remaining requests: {remaining_requests}. Sleeping for {wait_time:.1f}s until {wake_up_time}")
+                wake_up_time = time.strftime(
+                    "%Y-%m-%d %H:%M:%S", time.localtime(time.time() + wait_time)
+                )
+                print(
+                    f"[WAIT] Remaining requests: {remaining_requests}. Sleeping for {wait_time:.1f}s until {wake_up_time}"
+                )
                 time.sleep(wait_time)
             else:
-                print(f"[INFO] Reset time passed {abs(wait_time):.1f}s ago, skipping sleep.")
+                print(
+                    f"[INFO] Reset time passed {abs(wait_time):.1f}s ago, skipping sleep."
+                )
 
         return func(*args, **kwargs)
 
     return wrapper
-
 
 
 # Dataclass
@@ -600,7 +612,7 @@ class GithubScraper:
         except Exception as err:
             self.logger.error(f"[get_watch_out] Failed for user {user.login}: {err}")
             return []
-        
+
     @ratelimiter
     def get_number_of_public_repos(self, user) -> int:
         """
@@ -614,7 +626,7 @@ class GithubScraper:
         """
         n_repos = user.public_repos
         return n_repos
-    
+
     def log_user_repo_limit(self, user):
         """
         Add a username to jsonl if the user exceeds the public repository limit.
@@ -630,7 +642,12 @@ class GithubScraper:
                 json.dump([{"username": user.login}], f)
 
     @ratelimiter
-    def get_user_info(self, user: NamedUser | AuthenticatedUser, company_label: str, company_filter=True) -> Optional[GithubUser]:
+    def get_user_info(
+        self,
+        user: NamedUser | AuthenticatedUser,
+        company_label: str,
+        company_filter=True,
+    ) -> Optional[GithubUser]:
         """
         Get user information for the specified user.
 
@@ -663,7 +680,7 @@ class GithubScraper:
 
         # 3. Infer DK location and company match
         ## Filter both on Danish location and company
-        if company_filter: 
+        if company_filter:
             match_result = infer_if_dk_and_company(
                 user_login=user_login,
                 company=company,
@@ -681,14 +698,11 @@ class GithubScraper:
             bio_variables = [user_login, company, email, bio, blog]
             bio_variables_clean = [str(bio.lower()) for bio in bio_variables if bio]
             location_result = user_is_from_dk(
-                bio_variables=bio_variables_clean,
-                user_location=location
+                bio_variables=bio_variables_clean, user_location=location
             )
             if location_result is None:
                 return None
-            company_result = search_for_company(
-                bio_variables=bio_variables_clean
-            )
+            company_result = search_for_company(bio_variables=bio_variables_clean)
             location_match = location_result
             matched_company_strings = company_result
 

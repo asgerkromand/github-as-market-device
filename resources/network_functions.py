@@ -12,9 +12,7 @@ from collections import defaultdict
 from datetime import datetime
 
 # Paths
-fp_main = Path(
-    "/Volumes/SAM-SODAS-DISTRACT/Coding Distraction/github_as_market_device"
-)
+fp_main = Path("/Volumes/SAM-SODAS-DISTRACT/Coding Distraction/github_as_market_device")
 fp_main_output = Path(fp_main / "output")
 
 # Company category mapping
@@ -22,7 +20,7 @@ company_category_map = {}
 with open(fp_main_output / "company_category_map.jsonl", "r") as f:
     for line in f:
         record = json.loads(line)
-        company = record.get("company_search_keyword") 
+        company = record.get("company_search_keyword")
         category = record.get("company_category")
         if company and category is not None:
             company_category_map[company] = int(category)
@@ -30,13 +28,14 @@ with open(fp_main_output / "company_category_map.jsonl", "r") as f:
 # Set seed
 SEED = 1704
 
+
 def calculate_weighted_density(directed_graph: nx.DiGraph) -> float:
     """
     Calculate the weighted density of a directed graph.
-    
+
     Weighted density = sum of edge weights / number of possible directed edges (n*(n-1))
     Self-loops are excluded from both the edge set and the possible edge count.
-    
+
     Args:
         directed_graph (networkx.DiGraph): A directed graph with edge weights.
 
@@ -45,19 +44,22 @@ def calculate_weighted_density(directed_graph: nx.DiGraph) -> float:
     """
     graph = directed_graph.copy()
     graph.remove_edges_from(nx.selfloop_edges(graph))
-    
+
     number_of_nodes = graph.number_of_nodes()
     possible_edges = number_of_nodes * (number_of_nodes - 1)
-    
-    sum_of_weights = sum(data.get('weight', 1) for u, v, data in graph.edges(data=True))
+
+    sum_of_weights = sum(data.get("weight", 1) for u, v, data in graph.edges(data=True))
     weighted_density = sum_of_weights / possible_edges if possible_edges != 0 else 0
-    
+
     return weighted_density
 
-class CompanyLookup:
-    def __init__(self, df: pd.DataFrame, company_category_map: dict = company_category_map):
+
+class Lookup:
+    def __init__(
+        self, df: pd.DataFrame, company_category_map: dict = company_category_map
+    ):
         """
-        Initialize the CompanyLookup with company data.
+        Initialize the Lookup with company data.
 
         Parameters
         ----------
@@ -105,6 +107,23 @@ class CompanyLookup:
         """
         return self.company_category.get(company) if company else None
 
+    def get_user_type(self, user: Optional[str]) -> Optional[str]:
+        """
+        Get the type of user (individual or company) based on the user login.
+
+        Args:
+            user (str): The user login for which to retrieve the type.
+
+        Returns:
+            Optional[str]: The type of user ("User" or "Organization"), or None if not found.
+        """
+        if user not in self.users:
+            return None
+        user_type = self.df.loc[self.df["user_login"] == user, "usertype"]
+        if user_type.empty:
+            return None
+        return user_type.values[0] if not user_type.empty else None
+
 
 class NetworkEdgeListConstructor:
     CATEGORY_LABELS = {
@@ -129,17 +148,17 @@ class NetworkEdgeListConstructor:
         company_category_map : dict, optional
             Mapping of company names to their category information. Defaults to the global
             ``company_category_map``.
-        
+
         Notes
         -----
         This constructor also builds:
         - `self.df`: the provided DataFrame
-        - `self.lookup`: a CompanyLookup instance for user-company mapping
+        - `self.lookup`: a Lookup instance for user-company mapping
         - `self.company_label`: labels for company categories
         - `self.edge_types_in`: types of incoming edges
         """
         self.df = df
-        self.lookup = CompanyLookup(df, company_category_map)
+        self.lookup = Lookup(df, company_category_map)
         self.company_label = self.CATEGORY_LABELS
         self.edge_types_in = ["forks_in", "stars_in", "watches_in", "follows_in"]
         self.edge_types_out = ["forks_out", "stars_out", "watches_out", "follows_out"]
@@ -165,14 +184,15 @@ class NetworkEdgeListConstructor:
         Returns:
             Optional[dict]: The constructed edge dictionary, or None if invalid.
         """
-        # Validate input
-        if item is None:
-            return None
 
         # Extract relevant information from the item
         repo_name = item.get("repo_name")
         created_at = item.get("created_at")
         edge_repo = f"{repo_name}/{src_user}" if repo_name and src_user else None
+
+        # Lookup user types
+        src_usertype = self.lookup.get_user_type(src_user)
+        target_usertype = self.lookup.get_user_type(target_user)
 
         # Lookup companies for users
         src_company = self.lookup.get_user_company(src_user)
@@ -195,6 +215,8 @@ class NetworkEdgeListConstructor:
         return {
             "src": src_user,
             "target": target_user,
+            "src_usertype": src_usertype,
+            "target_usertype": target_usertype,
             "src_company": src_company,
             "target_company": target_company,
             "src_company_category": src_company_category,
@@ -234,12 +256,13 @@ class NetworkEdgeListConstructor:
                 if github_connections is None or len(github_connections) == 0:
                     continue
 
-                # Iterate over GitHub connections 
+                # Iterate over GitHub connections
                 for connection in github_connections:
                     # Get source and target users
                     if direction == "in":
                         src_user = connection.get("owner_login")
                         target_user = user_login
+
                     else:
                         src_user = user_login
                         target_user = connection.get("owner_login")
@@ -248,13 +271,17 @@ class NetworkEdgeListConstructor:
                         continue
 
                     # Build edge dictionary
-                    edge_dict = self._build_edge_dict(src_user, target_user, action, item)
+                    edge_dict = self._build_edge_dict(
+                        src_user, target_user, action, connection
+                    )
                     if edge_dict:
                         edges.append(edge_dict)
 
         return edges
 
-    def _build_user_level_edgelist(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    def _build_user_level_edgelist(
+        self,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """
         Build user-level edge list DataFrames for different action types.
 
@@ -292,11 +319,15 @@ class NetworkEdgeListConstructor:
 
 
 class GraphConstructor:
-    def __init__(self, edge_list_df: pd.DataFrame, graph_type: Literal["attention", "collaboration"] = 'attention'):
+    def __init__(
+        self,
+        edge_list_df: pd.DataFrame,
+        graph_type: Literal["attention", "collaboration"] = "attention",
+    ):
         """
         Initialize the GraphConstructor with edge list DataFrame and graph type.
 
-        Args    
+        Args
         ----
             edge_list_df (pd.DataFrame): The edge list DataFrame.
             graph_type (Literal["attention", "collaboration"]): The type of graph to construct.
@@ -312,10 +343,10 @@ class GraphConstructor:
         self.collaboration_actions = ["forks"]
         self.all_actions = self.attention_actions + self.collaboration_actions
         self.graph_type = graph_type
-        
+
         if self.graph_type not in ["attention", "collaboration"]:
             raise ValueError("graph_type must be 'attention' or 'collaboration'")
-        
+
         if self.graph_type == "attention":
             self.df_subset = self.df[self.df["action"].isin(self.attention_actions)]
         else:
@@ -331,24 +362,34 @@ class GraphConstructor:
         Returns:
             dict: A mapping of company names to their category and label.
         """
-        src = self.df_subset[['src_company', 'src_company_category', 'src_company_label']]
-        tgt = self.df_subset[['target_company', 'target_company_category', 'target_company_label']]
+        src = self.df_subset[
+            ["src_company", "src_company_category", "src_company_label"]
+        ]
+        tgt = self.df_subset[
+            ["target_company", "target_company_category", "target_company_label"]
+        ]
 
-        src = src.rename(columns={
-            'src_company': 'company', 
-            'src_company_category': 'category', 
-            'src_company_label': 'label'
-        })
-        tgt = tgt.rename(columns={
-            'target_company': 'company', 
-            'target_company_category': 'category', 
-            'target_company_label': 'label'
-        })
+        src = src.rename(
+            columns={
+                "src_company": "company",
+                "src_company_category": "category",
+                "src_company_label": "label",
+            }
+        )
+        tgt = tgt.rename(
+            columns={
+                "target_company": "company",
+                "target_company_category": "category",
+                "target_company_label": "label",
+            }
+        )
 
-        combined = pd.concat([src, tgt]).drop_duplicates(subset='company', keep='first')
+        combined = pd.concat([src, tgt]).drop_duplicates(subset="company", keep="first")
 
         # Create a dict: company -> {'category': category_value, 'label': label_value}
-        company_info_map = combined.set_index('company')[['category', 'label']].to_dict(orient='index')
+        company_info_map = combined.set_index("company")[["category", "label"]].to_dict(
+            orient="index"
+        )
 
         return company_info_map
 
@@ -360,7 +401,9 @@ class GraphConstructor:
             nx.DiGraph: A directed graph representing user-user interactions.
         """
         # Count all occurrences of actions between users (including repeats)
-        edge_action_counts = defaultdict(lambda: {action: 0 for action in self.all_actions})
+        edge_action_counts = defaultdict(
+            lambda: {action: 0 for action in self.all_actions}
+        )
 
         for _, row in self.df_subset.iterrows():
             src = row["src"]
@@ -378,7 +421,9 @@ class GraphConstructor:
         G = self.annotate_edges_with_intra_inter(G, level="user")
         return G
 
-    def aggregate_to_company_graph(self, user_graph: nx.DiGraph, actions_to_include: list) -> nx.DiGraph:
+    def aggregate_to_company_graph(
+        self, user_graph: nx.DiGraph, actions_to_include: list
+    ) -> nx.DiGraph:
         """
         Aggregate user-user interactions into company-company interactions.
 
@@ -394,7 +439,9 @@ class GraphConstructor:
             user_to_company[row["src"]] = row["src_company"]
             user_to_company[row["target"]] = row["target_company"]
 
-        company_edge_action_counts = defaultdict(lambda: {action: 0 for action in self.all_actions})
+        company_edge_action_counts = defaultdict(
+            lambda: {action: 0 for action in self.all_actions}
+        )
         company_edge_weights = defaultdict(int)  # counts unique user-user edges
 
         for src_user, tgt_user, data in user_graph.edges(data=True):
@@ -408,7 +455,9 @@ class GraphConstructor:
 
             # Sum the total number of each action over all user-user edges
             for action in actions_to_include:
-                company_edge_action_counts[(src_c, tgt_c)][action] += data.get(action, 0)
+                company_edge_action_counts[(src_c, tgt_c)][action] += data.get(
+                    action, 0
+                )
 
         G_company = nx.DiGraph()
 
@@ -420,19 +469,28 @@ class GraphConstructor:
         for (src_c, tgt_c), counts in company_edge_action_counts.items():
             weight = company_edge_weights.get((src_c, tgt_c), 0)
             if weight > 0:
-                G_company.add_edge(src_c, tgt_c, weight=weight, **{a: counts[a] for a in actions_to_include})
+                G_company.add_edge(
+                    src_c,
+                    tgt_c,
+                    weight=weight,
+                    **{a: counts[a] for a in actions_to_include},
+                )
 
         G_company = self.annotate_edges_with_intra_inter(G_company, level="company")
 
         # Add company_category attribute to nodes
         for node in G_company.nodes:
-            info = self.company_category_map.get(node, {"category": "NA", "label": "NA"})
-            G_company.nodes[node]['category'] = info.get('category', 'NA')
-            G_company.nodes[node]['label'] = info.get('label', 'NA')
+            info = self.company_category_map.get(
+                node, {"category": "NA", "label": "NA"}
+            )
+            G_company.nodes[node]["category"] = info.get("category", "NA")
+            G_company.nodes[node]["label"] = info.get("label", "NA")
 
         return G_company
 
-    def annotate_edges_with_intra_inter(self, G: nx.DiGraph, level="user") -> nx.DiGraph:
+    def annotate_edges_with_intra_inter(
+        self, G: nx.DiGraph, level="user"
+    ) -> nx.DiGraph:
         """
         Annotate edges with intra- and inter-level information.
 
@@ -475,16 +533,19 @@ class GraphConstructor:
         if self.graph_type == "attention":
             graph = self.aggregate_to_company_graph(user_graph, self.attention_actions)
         else:
-            graph = self.aggregate_to_company_graph(user_graph, self.collaboration_actions)
+            graph = self.aggregate_to_company_graph(
+                user_graph, self.collaboration_actions
+            )
 
         return graph
 
+
 class NetworkVisualizer:
     DEFAULT_NODE_COLORS = {
-        "1 Digital and marketing consultancies": '#003f5c',
-        "2 Bespoke app companies": '#665191',
-        "3 Data broker- and infrastructure companies": '#d45087',
-        "4 Companies with specific digital part/app as part of service/product": '#ff7c43',
+        "1 Digital and marketing consultancies": "#003f5c",
+        "2 Bespoke app companies": "#665191",
+        "3 Data broker- and infrastructure companies": "#d45087",
+        "4 Companies with specific digital part/app as part of service/product": "#ff7c43",
     }
 
     ATTENTION_ACTIONS = {"follows", "stars", "watches"}
@@ -494,7 +555,12 @@ class NetworkVisualizer:
     FONT_SIZE = 11
     FONT_WEIGHT = "bold"
 
-    def __init__(self, G, edgelist: pd.DataFrame | None, graph_type: Literal["attention", "collaboration"] = 'attention'):
+    def __init__(
+        self,
+        G,
+        edgelist: pd.DataFrame | None,
+        graph_type: Literal["attention", "collaboration"] = "attention",
+    ):
         """
         Initialize the NetworkVisualizer.
 
@@ -526,7 +592,7 @@ class NetworkVisualizer:
         # If the edge list is None, return None
         if edgelist is None:
             return None
-        
+
         # Filter based on the graph type
         if self.graph_type == "attention":
             return edgelist[edgelist["action"].isin(self.ATTENTION_ACTIONS)]
@@ -551,9 +617,13 @@ class NetworkVisualizer:
         elif self.graph_type == "collaboration":
             k = 1.1
         if layout_type == "spring_layout":
-            return nx.spring_layout(self.G, seed=seed, k=k, iterations=50, weight="weight")
+            return nx.spring_layout(
+                self.G, seed=seed, k=k, iterations=50, weight="weight"
+            )
         else:
-            raise ValueError(f"Layout '{layout_type}' is not supported. Try 'spring_layout'.")
+            raise ValueError(
+                f"Layout '{layout_type}' is not supported. Try 'spring_layout'."
+            )
 
     def draw_nodes(self, pos: dict, ax: plt.Axes, alpha=1) -> None:
         """
@@ -565,13 +635,14 @@ class NetworkVisualizer:
             alpha (float): The transparency level of the nodes.
 
         Returns:
-            None 
+            None
         """
         # Compute node sizes and colors
         degrees = dict(self.G.degree)
         node_sizes = [500 + 100 * degrees.get(n, 0) for n in self.G.nodes]
         node_colors = [
-            self.node_colors.get(self.G.nodes[n].get("label", ""), "#000000") for n in self.G.nodes
+            self.node_colors.get(self.G.nodes[n].get("label", ""), "#000000")
+            for n in self.G.nodes
         ]
 
         # Draw the nodes
@@ -711,8 +782,9 @@ class NetworkVisualizer:
             kwargs["connectionstyle"] = connectionstyle
         nx.draw_networkx_edges(**kwargs)
 
-
-    def draw_labels(self, pos, ax, verticalalignment="top", horizontalalignment="right") -> None:
+    def draw_labels(
+        self, pos, ax, verticalalignment="top", horizontalalignment="right"
+    ) -> None:
         """
         Draw node labels on the graph.
 
@@ -746,6 +818,7 @@ class NetworkVisualizer:
         Returns:
             list[Line2D]: A list of legend handles.
         """
+
         # Helper function to wrap text
         def wrap_text(text):
             return "\n".join(textwrap.wrap(text, width=wrap_width))
@@ -753,7 +826,8 @@ class NetworkVisualizer:
         # Create legend handles
         return [
             Line2D(
-                [0], [0],
+                [0],
+                [0],
                 marker="o",
                 color="w",
                 markerfacecolor=color,
@@ -763,7 +837,9 @@ class NetworkVisualizer:
             for label, color in self.node_colors.items()
         ]
 
-    def add_network_stats(self, ax: plt.Axes, edgelist: pd.DataFrame, pos=(0.02, 0.02), fontsize=14) -> None:
+    def add_network_stats(
+        self, ax: plt.Axes, edgelist: pd.DataFrame, pos=(0.02, 0.02), fontsize=14
+    ) -> None:
         """
         Adds network statistics to the plot.
 
@@ -777,21 +853,37 @@ class NetworkVisualizer:
             None
         """
         # User level
-        no_users = len(pd.unique(edgelist[['src', 'target']].values.ravel()))
-        no_unique_inter_user_to_user = edgelist[edgelist['d_inter_level'] == 1][['src', 'target']].drop_duplicates().shape[0]
-        no_unique_intra_user_to_user = edgelist[edgelist['d_intra_level'] == 1][['src', 'target']].drop_duplicates().shape[0]
+        no_users = len(pd.unique(edgelist[["src", "target"]].values.ravel()))
+        no_unique_inter_user_to_user = (
+            edgelist[edgelist["d_inter_level"] == 1][["src", "target"]]
+            .drop_duplicates()
+            .shape[0]
+        )
+        no_unique_intra_user_to_user = (
+            edgelist[edgelist["d_intra_level"] == 1][["src", "target"]]
+            .drop_duplicates()
+            .shape[0]
+        )
 
         # Company level
-        no_companies = len(set(edgelist["src_company"]).union(edgelist["target_company"]))
-        no_inter_company_edges_directed = len([(u,v) for u,v, d in self.G.edges(data=True) if d.get("d_inter_level") == 1])
+        no_companies = len(
+            set(edgelist["src_company"]).union(edgelist["target_company"])
+        )
+        no_inter_company_edges_directed = len(
+            [
+                (u, v)
+                for u, v, d in self.G.edges(data=True)
+                if d.get("d_inter_level") == 1
+            ]
+        )
 
         # Total weight of inter-company edges (user-level, directed)
-        no_inter_gh = edgelist[edgelist['d_inter_level'] == 1].shape[0]
+        no_inter_gh = edgelist[edgelist["d_inter_level"] == 1].shape[0]
 
         # Total weight of self-loop edges (src_company == tgt_company)
-        no_intra_gh = edgelist[edgelist['d_intra_level'] == 1].shape[0]
+        no_intra_gh = edgelist[edgelist["d_intra_level"] == 1].shape[0]
 
-        # Weighted density 
+        # Weighted density
         weighted_density = calculate_weighted_density(self.G)
 
         # Prepare the text for the statistics
@@ -817,7 +909,9 @@ class NetworkVisualizer:
             transform=ax.transAxes,
         )
 
-    def create_plot(self, layout_type="spring_layout", figsize=(20, 20), seed=SEED, title="Network") -> Figure:
+    def create_plot(
+        self, layout_type="spring_layout", figsize=(20, 20), seed=SEED, title="Network"
+    ) -> Figure:
         """
         Creates a network plot.
 
@@ -864,7 +958,7 @@ class NetworkVisualizer:
         Args:
             fig: The matplotlib figure object to save.
             filename: The name of the file to save the plot as.
-        
+
         Returns:
             None
         """
@@ -877,5 +971,5 @@ class NetworkVisualizer:
 
         # Create the file path and save the figure
         filepath = output_folder / f"{filename}_{_datetime}.png"
-        fig.savefig(filepath, format='png', dpi=300, bbox_inches='tight')
+        fig.savefig(filepath, format="png", dpi=300, bbox_inches="tight")
         print(f"Plot saved as {filename}")

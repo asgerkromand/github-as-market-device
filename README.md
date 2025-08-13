@@ -103,7 +103,7 @@ The tables in the overleaf document are based on the data columns located in "ap
 
 ## 📌 Notes
 
-### Note on reproducibility
+### Note on reproducibility of code
 
 The data files in this repository are not the original datasets used to produce the tables and networks presented in the paper. The original data was collected at an earlier stage, but running the code now would generate similar data using the same methodological steps, and is therefore reproducible in this sense. Some output files are dummy files included to protect personal data.
 
