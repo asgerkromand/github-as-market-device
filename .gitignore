@@ -3,12 +3,12 @@ notebook_archive/
 .DS_Store
 .vscode
 .git/
-GithubAsMarketDevice.egg-info
+GithubAsMarketDevice.egg-info/
 .env
 .envrc
 to-do.txt
 appendix_extra/
 resources/filepaths.py
-GithubAsMarketDevice.egg-info/
+GithubAsMarketDevice.egg-info
 resources/config.ini
 sandbox.ipynb
