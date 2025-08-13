@@ -1,23 +1,10 @@
-# Github as Market Device
-
-To-do for repo:
-    - README
-        - Describe i readme:
-			- Hvordan man downloader environment og sætter det op (uv env osv.)
-			- config.ini med tokens
-			- filepaths
-			- At data med personlige oplysninger er dummy eksempler og lagret på sikre lokale dreve.
-			- Beskrive firmaliste
-			- Beskriv at repository indeholder test-filer output filer, da kodeprocessen har foregået over lang tid, og er blevet optimeret undervejs på en måde, der gør at de ikke længere er kompatible. De metodiske skridt er dog de samme, og koden ville kunne reproducere måden hvorpå data er blevet samlet ind.
-    - Update citation.cff med date released og publist-data
-
 # 📄 Github as Market Device
-**Authors:** Asger Balsby Kromand, Eva Iris Otto & Anders Blok
-**Journal/Conference:** Consumption Markets & Culture 
+**Authors:** Asger Balsby Kromand, Eva Iris Otto & Anders Blok \\
+**Journal/Conference:** Consumption Markets & Culture \\
 [**DOI:** [doi.org/xxxx](https://doi.org/xxxx)] 
 
 ---
-
+[TO_DO]
 ## 📚 Abstract
 > [Abstract]
 
@@ -36,7 +23,7 @@ To-do for repo:
 ├── LICENSE
 ├── pyproject.toml      # Configuration file for uv environment
 ├── README.md           
-├── requirements.txt    # Dependency file using pip freeze > requirements.txt
+├── requirements.txt    # Dependency file using pip
 └── uv.lock             # Dependency file for using uv sync
 ```
 
@@ -77,7 +64,7 @@ pip install -r requirements.txt
 
 ### Step 3: Required: Create additional files
 
-#### **config.ini**
+#### **\texttt{config.ini}**
 Create a configuration (config.ini) file at "resources/config.ini".
 
 The config.ini file will contatin your github token, which you can generate by following this [guide](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).
@@ -88,9 +75,9 @@ The config.file should be written as:
 access_token = <your-token>
 ```
 
-Be aware, that the token must not be inclosed by ' or " in a config.ini file.
+Be aware, that <your-token> must not be inclosed by ' or " in a config.ini file.
 
-#### **filepaths.py**
+#### **\texttt{filepaths.py}**
 
 To follow our example, we recommend creating a filepath system using the [pathlib](https://docs.python.org/3/library/pathlib.html) library. The file should be called filepaths.py and created at "resources/filepaths.py".
 
@@ -98,28 +85,37 @@ NB. For our filepaths, we created to sets, as the personal data had to be stored
 
 ## ▶️ Usage
 
-### Reproduce Experiments
-```bash
-python src/train.py --config configs/experiment.yaml
-```
+### Notebooks
 
-### Generate Figures
-```bash
-python src/plot_results.py
-```
+The scraping, sorting, vizualising and analysis is performed in the notebooks, and the notebooks come in chronological order representing the pipeline for our paper. 
+
+In the notebooks 1-5, the scraping and sorting of data happens. In notebook 6 the networks i visualized, and in notebook 7 the edges are explored more qualitatively. Lastly, the descriptive tables for both the analysis part and the additional tables for the appendix are produced.
+
+**NB:** These notebooks represent the methodological pipeline use in our paper. Running them now, will *not* reproduce the original dataset used to produce the networks and tables in our paper.
+
+*In order to run the pipeline, you need to manually input to files:* An initial company list (.csv) to input for the notebook "1. Collecting first-tier users.ipynb", and a second-tier company list (also .csv) as input for the notebook "2. Creating first-tier dataset.ipynb". For examples: See "output/second_tier_companies.csv" and "output/initial_list.csv".
+
+### Generation of appendix
+
+The appendix -- located at "appendix/appendix.pdf" -- is generated using Overleaf. You can [view the Overleaf document here](https://www.overleaf.com/read/xvghfbbjntbd#c8aed2).
+
+The tables in the overleaf document are based on the data columns located in "appendix/appendix_files".
 
 ---
 
-## 📊 Results
-| Method         | Metric A | Metric B |
-|----------------|----------|----------|
-| Our Method     | 0.92     | 0.85     |
-| Baseline       | 0.88     | 0.80     |
+## 📌 Notes
+
+### Note on reproducibility
+
+The data files in this repository are not the original datasets used to produce the tables and networks presented in the paper. The original data was collected at an earlier stage, but running the code now would generate similar data using the same methodological steps, and is therefore reproducible in this sense. Some output files are dummy files included to protect personal data.
 
 ---
 
 ## 📜 Citation
 If you use this code or data, please cite:
+
+[TO-DO]
+
 ```bibtex
 @article{lastname2025title,
   title={Title of the Paper},
@@ -133,9 +129,15 @@ If you use this code or data, please cite:
 ---
 
 ## 📄 License
-Specify your license, e.g., MIT, Apache 2.0, or CC-BY for data.
+
+MIT License. For specification see file "LICENSE".
 
 ---
 
 ## 🙌 Acknowledgments
-Funding sources, collaborations, or software you built upon.
+
+This project is part of the [DISTRACT project](https://sodas.ku.dk/projects/distract/). DISTRACT is funded by an Advanced Grant from the European Research Council. Period: 1 January 2020 to 31 December 2024. 
+
+Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Research Council Executive Agency. Neither the European Union nor the granting authority can be held responsible for them.
+
+![image](https://erc.europa.eu/sites/default/files/inline-images/ERC%20logo.png)
