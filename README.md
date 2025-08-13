@@ -3,10 +3,11 @@
 
 **Journal:** Consumption Markets & Culture
 
-[**DOI:** [doi.org/xxxx](https://doi.org/xxxx)]
+[TO-DO]
+**DOI:** [doi.org/xxxx](https://doi.org/xxxx)
 
 ---
-[TO_DO]
+[TO-DO]
 ## 📚 Abstract
 > [Abstract]
 
